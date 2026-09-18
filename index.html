@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d">
+<title>KOFFIE — Jln. Mentol</title>
+<style>
+  :root{
+    --bg:#0d0d0d; --panel:#151515; --panel2:#1c1c1c; --line:#2a2a2a;
+    --ink:#f4f1ea; --muted:#9a938a; --accent:#d9a86c; --ok:#5fbf7f; --no:#c9564f;
+    --radius:14px; --pad:16px;
+    --tg-atas:0px;              /* ruang atas ikut UI Telegram — diisi oleh JS */
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;}
+  body{padding-bottom:84px}
+  .wrap{max-width:640px;margin:0 auto;padding:0 var(--pad)}
+
+  /* ---------- header ---------- */
+  /* padding atas = asas + --tg-atas (contentSafeAreaInset + safeAreaInset Telegram + ruang
+     selesa) supaya logo tidak tertutup oleh bar atas mini app */
+  header{padding:calc(30px + var(--tg-atas, 0px)) var(--pad) 18px;text-align:center;
+    border-bottom:1px solid var(--line);background:#000}
+  .brand{font-size:26px;letter-spacing:.42em;font-weight:600;text-indent:.42em;margin:0}
+  .brand img{width:140px;height:auto;max-width:84%;object-fit:contain;display:block;margin:0 auto;text-indent:0}
+  .brand img.papan{background:#f4f1ea;padding:10px 16px;border-radius:12px}
+  .tag{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.5}
+  .status{display:inline-flex;align-items:center;gap:7px;margin-top:12px;font-size:12px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .dot.off{background:var(--no);box-shadow:0 0 8px var(--no)}
+
+  /* ---------- nav ---------- */
+  nav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,13,13,.96);
+    backdrop-filter:blur(12px);border-top:1px solid var(--line);z-index:50}
+  .nav-in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+  .nav-in button{background:none;border:0;color:var(--muted);padding:12px 4px 14px;font-size:10.5px;
+    letter-spacing:.1em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:5px;
+    font-family:inherit;cursor:pointer}
+  .nav-in button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .nav-in button.on{color:var(--ink)}
+  .badge{position:absolute;transform:translate(14px,-6px);background:var(--accent);color:#111;
+    border-radius:9px;font-size:9.5px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center}
+
+  /* ---------- sections ---------- */
+  section{display:none;padding:18px 0 8px}
+  section.on{display:block}
+
+  /* ---------- animasi (rasa native) ---------- */
+  @keyframes masukKanan{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+  @keyframes masukKiri{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}
+  section.on.masuk-kanan{animation:masukKanan .24s cubic-bezier(.22,.61,.36,1) both}
+  section.on.masuk-kiri{animation:masukKiri .24s cubic-bezier(.22,.61,.36,1) both}
+
+  /* item menu + gambar galeri muncul berperingkat bila masuk skrin */
+  .item{opacity:0;transform:translateY(10px);
+    transition:opacity .34s ease,transform .34s cubic-bezier(.22,.61,.36,1)}
+  .item.nampak{opacity:1;transform:none}
+  .gal figure{opacity:0;transform:translateY(10px);
+    transition:opacity .4s ease,transform .4s cubic-bezier(.22,.61,.36,1)}
+  .gal figure.nampak{opacity:1;transform:none}
+
+  /* item terbang ke ikon cart */
+  .terbang{position:fixed;z-index:200;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;
+    background:var(--accent);color:#111;display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;pointer-events:none;
+    transition:transform .5s cubic-bezier(.4,.05,.3,1),opacity .5s ease}
+  @keyframes lantun{0%{transform:translate(14px,-6px) scale(1)}
+    35%{transform:translate(14px,-6px) scale(1.55)}100%{transform:translate(14px,-6px) scale(1)}}
+  .badge.lantun{animation:lantun .42s ease}
+
+  @media (prefers-reduced-motion:reduce){
+    section.on.masuk-kanan,section.on.masuk-kiri,.badge.lantun{animation:none}
+    .terbang{transition:none}
+    .item,.gal figure{opacity:1;transform:none;transition:none}
+  }
+  h2{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
+    margin:22px 0 12px;font-weight:600}
+  h2:first-child{margin-top:4px}
+  .nota-kat{font-size:11.5px;color:var(--muted);margin:-6px 0 12px;font-style:italic}
+
+  /* ---------- menu ---------- */
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;padding:8px 14px;font-size:11.5px;letter-spacing:.08em;font-family:inherit;cursor:pointer}
+  .chip.on{background:var(--ink);color:#111;border-color:var(--ink);font-weight:600}
+  .item{display:flex;gap:12px;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--radius);padding:12px;margin-bottom:10px;align-items:center}
+  .item img{width:56px;height:56px;border-radius:10px;object-fit:cover;background:var(--panel2);flex:0 0 auto}
+  .item .ph{width:56px;height:56px;border-radius:10px;background:var(--panel2);flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;color:#3a3a3a;font-size:19px}
+  .meta{flex:1;min-width:0}
+  .nama{font-size:14.5px;font-weight:600;line-height:1.3}
+  .desc{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.45;
+    overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .harga{font-size:13.5px;color:var(--accent);font-weight:600;margin-top:5px}
+  .tambah{background:var(--ink);color:#111;border:0;width:34px;height:34px;border-radius:50%;
+    font-size:19px;line-height:1;cursor:pointer;flex:0 0 auto;font-family:inherit}
+  .item.habis{opacity:.42}
+  .habis-lbl{font-size:10.5px;letter-spacing:.1em;color:var(--no);text-transform:uppercase}
+
+  /* ---------- cart ---------- */
+  .baris{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:11px 12px;margin-bottom:8px}
+  .baris .nm{flex:1;font-size:13.5px}
+  .baris .sub{color:var(--accent);font-size:13px;font-weight:600}
+  .qty{display:flex;align-items:center;gap:9px}
+  .qty button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);width:27px;height:27px;
+    border-radius:8px;font-size:15px;font-family:inherit;cursor:pointer}
+  .kosong{color:var(--muted);font-size:13px;text-align:center;padding:34px 0}
+  .jumlah{display:flex;justify-content:space-between;font-size:15px;font-weight:600;
+    padding:14px 2px 6px;border-top:1px solid var(--line);margin-top:12px}
+  label.f{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin:14px 0 6px}
+  input,select,textarea{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--ink);
+    border-radius:11px;padding:11px 12px;font-size:14px;font-family:inherit}
+  textarea{resize:vertical;min-height:60px}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .seg button{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:11px;
+    padding:11px;font-size:13px;font-family:inherit;cursor:pointer}
+  .seg button.on{background:var(--ink);color:#111;border-color:var(--ink);font-weight:600}
+  .hantar{width:100%;margin-top:18px;background:var(--accent);color:#141414;border:0;border-radius:12px;
+    padding:15px;font-size:14.5px;font-weight:700;letter-spacing:.06em;font-family:inherit;cursor:pointer}
+  .hantar:disabled{opacity:.5}
+  .kecil{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:10px}
+  .kecil a{color:var(--accent);text-decoration:none}
+
+  /* ---------- gallery / lokasi ---------- */
+  /* satu lajur, RAPAT: gambar bersambung terus dengan gambar berikutnya (tiada jarak/caption) */
+  .gal{display:grid;grid-template-columns:1fr;gap:0}
+  .gal figure{margin:0;position:relative;overflow:hidden;background:var(--panel)}
+  .gal img{width:100%;height:auto;display:block}
+  .gal .fallback{display:flex;align-items:center;justify-content:center;height:200px;color:#333;font-size:24px}
+  .gal .fallback{display:flex;align-items:center;justify-content:center;height:100%;color:#333;font-size:24px}
+  .info{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:15px;margin-bottom:10px}
+  .info .lbl{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .info .val{font-size:14px;margin-top:6px;line-height:1.55}
+  .btnrow{display:grid;gap:9px;margin-top:14px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;background:var(--panel);border:1px solid var(--line);
+    color:var(--ink);border-radius:12px;padding:14px;font-size:14px;text-decoration:none;font-family:inherit;cursor:pointer}
+  .btn.utama{background:var(--accent);color:#141414;border-color:var(--accent);font-weight:700}
+  .btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);background:var(--ink);color:#111;
+    padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;
+    transition:.25s;z-index:99;max-width:88vw;text-align:center}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+  .harga .hp{display:inline-block;margin-right:10px}
+  .harga .hp b{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+
+  /* ---------- gambar menu rasmi ---------- */
+  .hero{position:relative;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    background:var(--panel);margin-bottom:16px}
+  .hero img{width:100%;max-height:230px;object-fit:cover;object-position:top;display:block;opacity:.9}
+  .hero .lapis{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;
+    padding:14px;background:linear-gradient(transparent 30%,rgba(0,0,0,.85))}
+  .hero .lapis b{font-size:13.5px;letter-spacing:.04em}
+  .hero .lapis span{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .viewer{position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:120;display:none;
+    overflow:auto;-webkit-overflow-scrolling:touch}
+  .viewer.on{display:block}
+  .viewer img{width:100%;display:block;max-width:none}
+  .viewer .tutup{position:fixed;top:12px;right:12px;z-index:121;background:rgba(255,255,255,.14);
+    border:0;color:#fff;width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer}
+  .viewer .kepala{position:fixed;top:14px;left:16px;z-index:121;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:#fff;opacity:.75}
+
+  /* ---------- pilih suhu ---------- */
+  .kotak{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:110;display:none;
+    align-items:flex-end;justify-content:center;padding:0 0 12px}
+  .kotak.on{display:flex}
+  .kotak-in{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;
+    width:100%;max-width:420px;text-align:center}
+  .kotak-tajuk{font-size:15px;font-weight:600}
+  .kotak-sub{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:7px 0 16px}
+  .kotak-pil{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .kotak-pil button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:12px;
+    padding:14px;font-size:13px;font-family:inherit;cursor:pointer;line-height:1.6}
+  .kotak-pil button b{font-size:15px;color:var(--accent)}
+  .kotak-pil button.on{background:var(--ink);color:#111;border-color:var(--ink);font-weight:600}
+  .kotak-pil button.on b{color:#111}
+
+  /* ---------- add-on setiap minuman ---------- */
+  .addon-tajuk{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+    margin:18px 0 8px;text-align:left}
+  .addon-tajuk i{text-transform:none;letter-spacing:0;font-style:italic;opacity:.7}
+  .addon-senarai{display:grid;gap:6px;max-height:44vh;overflow:auto;text-align:left;margin-bottom:6px}
+  .addon-baris{display:flex;align-items:center;gap:10px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;cursor:pointer}
+  .addon-baris input{width:17px;height:17px;accent-color:var(--accent);flex:0 0 auto;margin:0}
+  .addon-baris span{flex:1}
+  .addon-baris b{color:var(--accent);font-size:12.5px;font-weight:600}
+  .addon-baris.addon-drop{gap:8px}
+  .addon-sub{font-size:11.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;
+    margin:6px 0 -2px}
+  .flavor-pilih{margin-bottom:14px}
+  .flavor-pilih select{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+    border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:6px 6px,6px 6px;
+    background-repeat:no-repeat;padding-right:34px}
+  .addon-sub i{text-transform:none;letter-spacing:0;font-style:italic;opacity:.7}
+  .addon-baris select{flex:0 1 58%;background:var(--panel);color:var(--ink);border:1px solid var(--line);
+    border-radius:9px;padding:7px 8px;font-family:inherit;font-size:12.5px;appearance:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 14px) 52%,calc(100% - 9px) 52%;background-size:5px 5px,5px 5px;
+    background-repeat:no-repeat;padding-right:26px}
+  .addon-kecil{display:block;font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.55}
+
+  /* ---------- home: gambar penuh kiri-kanan, tinggi ikut nisbah asal ---------- */
+  .home-gal{margin:0 -16px 16px;display:grid;gap:8px}
+  .home-gal figure{margin:0;position:relative;background:var(--panel);overflow:hidden}
+  .home-gal img{width:100%;height:auto;display:block}
+  .home-gal figcaption{position:absolute;left:0;right:0;bottom:0;padding:34px 15px 14px;font-size:13px;
+    color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.88))}
+  .home-gal figcaption b{font-weight:600}
+
+  /* ---------- order options ---------- */
+  .opsi{display:grid;gap:10px;margin-bottom:18px}
+  .opsi-kad{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--panel);
+    border:1px solid var(--line);color:var(--ink);border-radius:var(--radius);padding:15px 14px;
+    font-family:inherit;font-size:14px;cursor:pointer}
+  .opsi-baris{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:none;
+    border:0;color:var(--ink);padding:15px 14px;font-family:inherit;cursor:pointer}
+  #kadDelivery{padding:0}
+  .opsi-ikon{flex:0 0 auto;width:22px;height:22px;display:flex;align-items:center;
+    justify-content:center;color:#fff}
+  .opsi-ikon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round}
+  .opsi-teks{flex:1;display:flex;flex-direction:column;gap:3px}
+  .opsi-teks b{font-size:14.5px;font-weight:600}
+  .opsi-teks i{font-size:11.5px;color:var(--muted);font-style:normal}
+  .opsi-anak{color:var(--muted);font-size:19px;padding-right:2px}
+  .opsi-link{display:none;flex-direction:column;gap:8px;padding:0 14px 14px}
+  .opsi-link.buka{display:flex}
+  .opsi-link a{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:11px;padding:12px;font-size:13.5px;color:var(--ink);text-decoration:none}
+  .nav-in.lima{grid-template-columns:repeat(5,1fr)}
+  .nav-in.lima button{font-size:9.5px;letter-spacing:.05em;padding:12px 2px 14px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 class="brand">KOFFIE</h1>
+  <div class="tag" id="tag">—</div>
+  <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">Loading…</span></div>
+</header>
+
+<div class="wrap">
+
+  <!-- ================= HOME ================= -->
+  <section id="s-home" class="on">
+    <div class="home-gal" id="homeGal"></div>
+    <div class="info">
+      <div class="lbl">Today</div>
+      <div class="val" id="homeStatus"></div>
+    </div>
+    <!-- media sosial (dipindah dari tab Find Us) -->
+    <div class="info">
+      <div class="lbl">Follow us</div>
+      <div class="btnrow" id="sosialHome">
+      <a class="btn" id="btnIg" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.1"/></svg>
+        Instagram
+      </a>
+      <a class="btn" id="btnTt" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M15 4c.6 2.6 2.2 4.2 4.8 4.6v3c-1.8.1-3.4-.4-4.8-1.4v5.6a5.6 5.6 0 1 1-5.6-5.6c.3 0 .6 0 .9.1v3.1a2.6 2.6 0 1 0 1.8 2.4V4H15z"/></svg>
+        TikTok
+      </a>
+      <a class="btn" id="btnFb" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M14.5 9V7.4c0-.8.2-1.4 1.5-1.4h1.5V3.2C17.2 3.1 16.3 3 15.3 3 12.9 3 11.4 4.4 11.4 7v2H9v3h2.4v9h3.1v-9h2.4l.4-3h-2.8z"/></svg>
+        Facebook
+      </a>
+      <a class="btn" id="btnTh" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M12.3 21c-4.2 0-6.3-2.6-6.3-5.6 0-2.3 1.4-4.3 3.6-5.3-.1-.5-.2-1.1-.2-1.6C9.4 5.7 11 3 14.7 3c1.4 0 2.6.4 3.4 1l-1.4 2.4c-.5-.3-1.1-.5-1.8-.5-1.6 0-2.6 1.2-2.6 2.8 0 .6.1 1.2.3 1.8l3.5-1.3.9 2.3-3.8 1.4c-.4 1.9-2 3.6-4.6 3.6-.6 0-1.1-.1-1.6-.2.6 1 1.7 1.6 3.2 1.6 2.9 0 4.7-1.7 5.6-4.2l2.4.8C18.8 17.7 16.4 21 12.3 21z"/></svg>
+        Threads
+      </a>
+      <a class="btn" id="btnWa" target="_blank" rel="noopener" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L4 20.5l1.6-4.6A8.4 8.4 0 1 1 21 11.5z"/></svg>
+        WhatsApp us
+      </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- (tab Menu dibuang — senarai boleh-pesan kini di dalam tab Order) -->
+
+  <!-- ================= ORDER ================= -->
+  <section id="s-troli">
+    <h2>Order</h2>
+    <div class="opsi" id="opsiOrder">
+      <button class="opsi-kad" data-opsi="pickup">
+        <span class="opsi-ikon"><svg viewBox="0 0 24 24"><path d="M4 9l1.3-5h13.4L20 9"/><path d="M5.2 9v11h13.6V9"/><path d="M9.5 20v-6h5v6"/></svg></span>
+        <span class="opsi-teks"><b>Pick up at store</b><i>Order here, collect at Jln. Mentol</i></span>
+        <span class="opsi-anak">›</span>
+      </button>
+      <div class="opsi-kad" id="kadDelivery">
+        <button class="opsi-baris" data-opsi="delivery">
+          <span class="opsi-ikon"><svg viewBox="0 0 24 24"><circle cx="6" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M8.5 17.5h6.6l-2.2-6.5H10"/><rect x="4.6" y="3.6" width="6.2" height="5" rx="1"/></svg></span>
+          <span class="opsi-teks"><b>Delivery</b><i>Order through a delivery app</i></span>
+          <span class="opsi-anak" id="anakDelivery">+</span>
+        </button>
+        <div class="opsi-link" id="linkHantar"></div>
+      </div>
+      <button class="opsi-kad" data-opsi="menu">
+        <span class="opsi-ikon"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span>
+        <span class="opsi-teks"><b>Menu</b><i>Open the full menu</i></span>
+        <span class="opsi-anak">›</span>
+      </button>
+    </div>
+    <!-- senarai boleh-pesan: muncul selepas tekan "Pick up at store" -->
+    <div id="orderBuilder" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+        <b style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)">Choose your drinks</b>
+        <button class="btn" id="bukaMenuImg" style="width:auto;padding:8px 12px;font-size:12px">
+          <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>
+          Full menu
+        </button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div id="menuList"></div>
+    </div>
+    <div id="cartList"></div>
+    <div id="cartForm" style="display:none">
+      <div class="jumlah"><span>Total</span><span id="total">RM0.00</span></div>
+      <label class="f">How to receive</label>
+      <div class="kecil" style="margin:-2px 0 14px">Pick up at the shop (Jln. Mentol). For delivery, order
+        through foodpanda or ShopeeFood in the Order tab.</div>
+      <label class="f">Name</label>
+      <input id="nm" placeholder="Name for the order" autocomplete="name">
+      <label class="f">Phone number</label>
+      <input id="tel" type="tel" placeholder="01X-XXX XXXX" autocomplete="tel">
+      <label class="f">Notes (optional)</label>
+      <textarea id="nota" placeholder="e.g. less sugar, less ice"></textarea>
+      <button class="hantar" id="btnHantar">Send Order</button>
+      <div class="kecil" id="notaKecil"></div>
+    </div>
+    <div class="kosong" id="cartEmpty">Your cart is empty.<br>Tap <b>Pick up at store</b> to choose your drinks.</div>
+  </section>
+
+  <!-- ================= GALLERY ================= -->
+  <section id="s-gal">
+    <h2>Gallery</h2>
+    <div class="gal" id="galGrid"></div>
+    <div class="kecil">More pictures on <a id="galIg" target="_blank" rel="noopener">Instagram</a>
+      · <b>@koffiejlnmentol</b></div>
+  </section>
+
+  <!-- ================= FIND US ================= -->
+  <section id="s-lok">
+    <h2>Find Us</h2>
+    <div class="info">
+      <div class="lbl">Address</div>
+      <div class="val" id="lAlamat"></div>
+      <div class="lbl" style="margin-top:14px">Opening hours</div>
+      <div class="val" id="lWaktu"></div>
+    </div>
+    <div class="btnrow">
+      <a class="btn utama" id="btnWaze" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M12 2 3 6v6c0 5 3.8 8.6 9 10 5.2-1.4 9-5 9-10V6l-9-4z"/><path d="M9 12l2 2 4-4"/></svg>
+        Open in Waze
+      </a>
+      <a class="btn" id="btnMaps" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        Google Maps
+      </a>
+    </div>
+    <div class="kecil">Walk in or order ahead — the <b>Order</b> tab takes orders for pick up, and our
+      socials live on the <b>Home</b> tab.</div>
+  </section>
+</div>
+
+<nav>
+  <div class="nav-in">
+    <button data-s="home" class="on"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/></svg>Home</button>
+    <button data-s="troli" style="position:relative"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.4h11L21 7H6"/></svg>Order<span class="badge" id="badge" style="display:none">0</span></button>
+    <button data-s="gal"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="M4 18l5-5 4 3.5 3-2.5 4 4"/></svg>Gallery</button>
+    <button data-s="lok"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Find Us</button>
+  </div>
+</nav>
+
+<div class="viewer" id="viewer">
+  <div class="kepala">KOFFIE MENU</div>
+  <button class="tutup" id="viewerTutup" aria-label="Close">✕</button>
+  <img id="viewerImg" src="assets/menu-2026-09.jpg" alt="Menu KOFFIE">
+</div>
+<div class="kotak" id="suhu"></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="data.js?v=20260917"></script>
+<script>
+/* =====================================================================
+   KOFFIE mini app — logik. Jangan perlu edit kecuali kau nak ubah tingkah laku.
+   ===================================================================== */
+const D = window.KOFFIE_DATA;
+const TG = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+const RM = n => "RM" + n.toFixed(2);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+try { if (TG) { TG.ready(); TG.expand(); if (TG.setHeaderColor) TG.setHeaderColor("#0d0d0d"); } } catch (e) {}
+
+/* ---------- ruang atas: jangan biar UI Telegram menutup logo ---------- */
+function pasangAtasTelegram() {
+  try {
+    const cs = (TG && TG.contentSafeAreaInset && TG.contentSafeAreaInset.top) || 0;
+    const sa = (TG && TG.safeAreaInset && TG.safeAreaInset.top) || 0;
+    const atas = Math.max(0, cs) + Math.max(0, sa) + 18;   // 18px = ruang selesa
+    document.documentElement.style.setProperty("--tg-atas", atas + "px");
+  } catch (e) {}
+}
+pasangAtasTelegram();
+try { if (TG && TG.onEvent) TG.onEvent("viewportChanged", pasangAtasTelegram); } catch (e) {}
+
+/* ---------- status buka/tutup ikut waktu kedai ---------- */
+function minitSekarang(myt) {
+  const d = new Date();
+  return d.getUTCHours() * 60 + d.getUTCMinutes() + myt * 60;
+}
+function statusKedai() {
+  const buka = toMin(D.SHOP.buka), tutup = toMin(D.SHOP.tutup);
+  let now = minitSekarang(D.SHOP.timezone) % 1440;
+  const semalam = now + 1440;                      // tutup 24:00 bermakna lepas tengah malam
+  const dalam = (now >= buka && now < (tutup || 1440)) ||
+                (tutup > 1440 && semalam >= buka && semalam < tutup);
+  return { buka: dalam, jam: now };
+}
+function toMin(hhmm) {
+  const [h, m] = String(hhmm).split(":").map(Number);
+  return h * 60 + (m || 0);
+}
+function paparStatus() {
+  const buka = statusKedai().buka;
+  document.getElementById("dot").className = "dot" + (buka ? "" : " off");
+  document.getElementById("statusTxt").textContent =
+    (buka ? "Open now" : "Closed") + " · " + D.SHOP.buka + "–" + (D.SHOP.tutup === "24:00" ? "12:00am" : D.SHOP.tutup);
+}
+document.getElementById("tag").textContent =
+  D.SHOP.tagline + (D.SHOP.logo ? "" : " · " + D.SHOP.verifikasi);   // logo dah bawa EST. 2021
+paparStatus(); setInterval(paparStatus, 60000);
+
+/* ---------- menu ---------- */
+let katAktif = null;
+function lukisChips() {
+  const w = document.getElementById("chips");
+  /* ADD-ON tidak dipapar sebagai chip: setiap minuman sudah ada pilihan add-on sendiri
+     dalam sheet "+" (senaraiAddon membaca kategori ADD-ON dari data.js). */
+  const senarai = D.MENU.map((k, i) => ({ k, i }))
+    .filter(x => !/ADD\s*-?\s*ON/i.test(x.k.kategori));
+  katAktif = senarai.length ? senarai[0].i : 0;
+  w.innerHTML = senarai.map(x =>
+    `<button class="chip${x.i === katAktif ? " on" : ""}" data-k="${x.i}">${esc(x.k.kategori)}</button>`).join("");
+  w.querySelectorAll(".chip").forEach(b => b.onclick = () => {
+    w.querySelectorAll(".chip").forEach(x => x.classList.remove("on"));
+    b.classList.add("on"); katAktif = +b.dataset.k; lukisMenu();
+  });
+}
+function lukisMenu() {
+  const k = D.MENU[katAktif];
+  const w = document.getElementById("menuList");
+  let h = `<h2>${esc(k.kategori)}</h2>` + (k.nota ? `<div class="nota-kat">${esc(k.nota)}</div>` : "");
+  h += k.item.map((it, idx) => {
+    const img = it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy">` : `<div class="ph">☕</div>`;
+    const harga = [];
+    if (it.panas != null) harga.push(`<span class="hp"><b>Hot</b> ${RM(it.panas)}</span>`);
+    if (it.sejuk != null) harga.push(`<span class="hp"><b>Iced</b> ${RM(it.sejuk)}</span>`);
+    return `<div class="item">
+      ${img}
+      <div class="meta">
+        <div class="nama">${esc(it.nama)}</div>
+        ${it.nota ? `<div class="desc">${esc(it.nota)}</div>` : ""}
+        <div class="harga">${harga.join("") || "—"}</div>
+      </div>
+      <button class="tambah" data-i="${idx}" aria-label="Tambah">+</button>
+    </div>`;
+  }).join("");
+  w.innerHTML = h;
+  w.querySelectorAll(".tambah").forEach(b => b.onclick = () => {
+    pilihItem(D.MENU[katAktif].item[+b.dataset.i], katAktif, +b.dataset.i);
+  });
+  pasangReveal(w.querySelectorAll(".item"));
+}
+
+/* add-on: diambil dari kategori "ADD-ON" dalam data.js */
+function senaraiAddon() {
+  const ci = D.MENU.findIndex(k => k.kategori.toUpperCase().replace(/[^A-Z]/g, "").includes("ADDON"));
+  if (ci < 0) return [];
+  return D.MENU[ci].item.map((a, ii) => ({ ...a, ci, ii,
+    harga: (a.sejuk != null ? a.sejuk : a.panas) }));
+}
+
+/* Satu sheet untuk setiap minuman: suhu (kalau perlu) + add-on + jumlah */
+/* Satu sheet untuk setiap minuman: suhu (kalau perlu) + add-on + jumlah.
+   Keadaan dibaca terus dari DOM — tiada lukis semula, jadi senarai add-on tak
+   melompat balik ke atas setiap kali kotak semak atau dropdown ditekan. */
+function pilihItem(it, ci, ii) {
+  const kotak = document.getElementById("suhu");
+  const adaPanas = it.panas != null, adaSejuk = it.sejuk != null;
+  const perluSuhu = adaPanas && adaSejuk;
+  let suhu = perluSuhu ? "" : (adaSejuk ? "s" : "p");
+  const addon = senaraiAddon();
+
+  const adaFlavor = !!(it.pilihan && it.pilihan.length);   // minuman yang ada pilihan perisa
+  let flavor = null;                                       // indeks perisa terpilih
+  const flavorTerpilih = () => (adaFlavor && flavor != null) ? it.pilihan[flavor] : null;
+
+  const hargaAsas = () => {
+    const p = flavorTerpilih();                            // perisa boleh bawa harga sendiri
+    if (p && p.harga != null) return p.harga;
+    return suhu === "s" ? it.sejuk : (suhu === "p" ? it.panas : (adaSejuk ? it.sejuk : it.panas));
+  };
+
+  /* add-on terpilih sekarang → {an:{nama,harga}, kod:"ci.ii" atau "ci.ii.kk"} */
+  const senaraiTerpilih = () => {
+    const keluar = [];
+    kotak.querySelectorAll("input[type=checkbox]:not([data-banyak]):checked").forEach(c => {
+      const a = addon[+c.value];
+      if (a) keluar.push({ an: a, kod: a.ci + "." + a.ii });
+    });
+    kotak.querySelectorAll("input[data-banyak]:checked").forEach(c => {
+      const a = addon[+c.dataset.banyak], o = a && a.pilihan[+c.value];
+      if (o) keluar.push({ an: { nama: a.nama + ": " + o.nama, harga: o.harga },
+                           kod: a.ci + "." + a.ii + "." + c.value });
+    });
+    kotak.querySelectorAll("select[data-addon]").forEach(s => {
+      if (s.value === "") return;
+      const a = addon[+s.dataset.addon], o = a && a.pilihan[+s.value];
+      if (o) keluar.push({ an: { nama: a.nama + ": " + o.nama, harga: o.harga },
+                           kod: a.ci + "." + a.ii + "." + s.value });
+    });
+    return keluar;
+  };
+  const jumlahAddon = () => senaraiTerpilih()
+    .reduce((s, x) => s + (x.an.harga != null ? x.an.harga : 0), 0);
+  const kemasHarga = () => {
+    const b = kotak.querySelector("#btnTambahItem");
+    if (b) b.textContent = "Add to order — " + RM((hargaAsas() || 0) + jumlahAddon());
+  };
+  const kemasSuhu = () => {
+    kotak.querySelectorAll("[data-suhu]").forEach(b =>
+      b.classList.toggle("on", b.dataset.suhu === suhu));
+    kotak.querySelector(".kotak-sub").textContent = perluSuhu
+      ? (suhu ? (suhu === "s" ? "Iced" : "Hot") : "Choose temperature")
+      : (suhu === "s" ? "Iced" : "Hot");
+    const b = kotak.querySelector("#btnTambahItem");
+    if (b) b.disabled = (perluSuhu && !suhu) || (adaFlavor && flavor == null);
+    kemasHarga();
+  };
+
+  const barisAddon = () => addon.map((a, k) => {
+    if (a.pilihan && a.pilihan.length && a.banyak)
+      return `<div class="addon-sub">${esc(a.nama)} <i>pick any</i></div>` +
+        a.pilihan.map((o, oi) => `<label class="addon-baris">
+            <input type="checkbox" data-banyak="${k}" value="${oi}">
+            <span>${esc(o.nama)}</span><b>${RM(o.harga)}</b></label>`).join("");
+    if (a.pilihan && a.pilihan.length)
+      return `<label class="addon-baris addon-drop">
+             <span>${esc(a.nama)}</span>
+             <select data-addon="${k}">
+               <option value="">—</option>
+               ${a.pilihan.map((o, oi) => `<option value="${oi}">${esc(o.nama)} · ${RM(o.harga)}</option>`).join("")}
+             </select></label>`;
+    return `<label class="addon-baris">
+             <input type="checkbox" value="${k}">
+             <span>${esc(a.nama)}</span><b>${RM(a.harga)}</b></label>`;
+  }).join("");
+
+  kotak.innerHTML = `<div class="kotak-in">
+      <div class="kotak-tajuk">${esc(it.nama)}</div>
+      <div class="kotak-sub">${perluSuhu ? "Choose temperature" : (suhu === "s" ? "Iced" : "Hot")}</div>
+      ${perluSuhu ? `<div class="kotak-pil">
+          <button data-suhu="p">Hot<br><b>${RM(it.panas)}</b></button>
+          <button data-suhu="s">Iced<br><b>${RM(it.sejuk)}</b></button>
+        </div>` : ""}
+      ${adaFlavor ? `<div class="addon-tajuk">Flavour <i>pick one</i></div>
+        <div class="flavor-pilih">
+          <select id="pilihFlavor">
+            <option value="">—</option>
+            ${it.pilihan.map((p, pi) => `<option value="${pi}"${flavor === pi ? " selected" : ""}>${esc(p.nama)}${p.harga != null ? " · " + RM(p.harga) : ""}</option>`).join("")}
+          </select>
+        </div>` : ""}
+      ${addon.length ? `<div class="addon-tajuk">Add-ons <i>optional</i></div>
+        <div class="addon-senarai">${barisAddon()}</div>` : ""}
+      <button class="hantar" id="btnTambahItem" ${((!perluSuhu || suhu) && (!adaFlavor || flavor != null)) ? "" : "disabled"}>
+        Add to order — ${RM((hargaAsas() || 0))}</button>
+    </div>`;
+
+  kotak.querySelectorAll("[data-suhu]").forEach(b =>
+    b.onclick = () => { suhu = b.dataset.suhu; kemasSuhu(); });
+  kotak.querySelectorAll("input[type=checkbox], select[data-addon]").forEach(el =>
+    el.onchange = kemasHarga);
+  const selFlavor = kotak.querySelector("#pilihFlavor");
+  if (selFlavor) selFlavor.onchange = () => {
+    flavor = selFlavor.value === "" ? null : +selFlavor.value;
+    kemasSuhu();
+  };
+  kemasSuhu();
+
+  const btnItem = kotak.querySelector("#btnTambahItem");
+  btnItem.onclick = () => {
+    if ((perluSuhu && !suhu) || (adaFlavor && flavor == null)) return;
+    const senaraiPilih = senaraiTerpilih();
+    const p = flavorTerpilih();
+    const namaItem = p ? it.nama + " — " + p.nama : it.nama;    // perisa masuk nama + kod
+    tambah(namaItem, hargaAsas(), ci + "." + ii + suhu + (p ? "." + flavor : ""),
+           suhu === "s" ? "Iced" : "Hot",
+           senaraiPilih.map(x => x.an), senaraiPilih.map(x => x.kod), btnItem);  // btnItem = asal animasi terbang
+    kotak.classList.remove("on");
+  };
+
+  /* buka sheet + tutup bila tekan latar belakang */
+  kotak.classList.add("on");
+  kotak.onclick = e => { if (e.target === kotak) kotak.classList.remove("on"); };
+}
+
+/* ---------- troli ---------- */
+let cart = [];
+try { cart = JSON.parse(localStorage.getItem("koffie_cart") || "[]") || []; } catch (e) { cart = []; }
+const cara = "Pick up";    /* app ini pick up sahaja — delivery melalui platform lain */
+const simpan = () => localStorage.setItem("koffie_cart", JSON.stringify(cart));
+
+function tambah(nama, harga, kunci, suhu, addons, kodAddon, dariEl) {
+  const label = nama + " (" + suhu + ")";
+  const senarai = addons || [];
+  const tambahan = senarai.reduce((s, a) => s + (a.harga != null ? a.harga : (a.sejuk ?? a.panas ?? 0)), 0);
+  const kunciPenuh = kunci + (kodAddon && kodAddon.length ? "+" + kodAddon.join(",") : "");
+  const ada = cart.find(x => (x.kunci || x.k) === kunciPenuh);
+  if (ada) ada.q++;
+  else cart.push({
+    n: label, kunci: kunciPenuh, k: kunci, a: kodAddon || [],
+    h: +(harga + tambahan).toFixed(2), q: 1,
+    an: senarai.map(a => ({ nama: a.nama, harga: (a.harga != null ? a.harga : (a.sejuk ?? a.panas ?? 0)) })),
+  });
+  simpan(); lukisCart(); bunyi("medium");
+  if (dariEl) terbangKeCart(dariEl); else lantunBadge();   // titik terbang → badge melantun bila mendarat
+  toast(label + (senarai.length ? " + add-ons" : "") + " added");
+}
+function ubah(i, d) {
+  cart[i].q += d;
+  if (cart[i].q <= 0) cart.splice(i, 1);
+  simpan(); lukisCart(); bunyi(); lantunBadge();
+}
+function jumlah() { return cart.reduce((s, x) => s + x.h * x.q, 0); }
+function kiraQty() { return cart.reduce((s, x) => s + x.q, 0); }
+
+function lukisCart() {
+  const badge = document.getElementById("badge"), q = kiraQty();
+  badge.style.display = q ? "inline-block" : "none"; badge.textContent = q;
+  const list = document.getElementById("cartList");
+  const kosong = !cart.length;
+  document.getElementById("cartEmpty").style.display = kosong ? "block" : "none";
+  document.getElementById("cartForm").style.display = kosong ? "none" : "block";
+  if (kosong) { list.innerHTML = ""; return; }
+  list.innerHTML = cart.map((x, i) => `<div class="baris">
+      <div class="nm">${esc(x.n)}${(x.an && x.an.length)
+        ? `<span class="addon-kecil">${x.an.map(a => "+ " + esc(a.nama) + " " + RM(a.harga)).join("<br>")}</span>` : ""}</div>
+      <div class="qty">
+        <button data-i="${i}" data-d="-1">−</button><span>${x.q}</span><button data-i="${i}" data-d="1">+</button>
+      </div>
+      <div class="sub">${RM(x.h * x.q)}</div>
+    </div>`).join("");
+  list.querySelectorAll(".qty button").forEach(b =>
+    b.onclick = () => ubah(+b.dataset.i, +b.dataset.d));
+  document.getElementById("total").textContent = RM(jumlah());
+  notaHantar();
+}
+function notaHantar() {
+  const s = D.SHOP;
+  const wa = !!s.whatsapp, tg = !!s.telegramBot;
+  document.getElementById("btnHantar").textContent = tg ? "Send Order via Telegram" : "Send Order";
+  document.getElementById("notaKecil").innerHTML = tg
+    ? "Your order opens in Telegram (" + esc("@" + s.telegramBot) + ") — press <b>Start</b> and it goes straight to the shop."
+    : "Set <b>telegramBot</b> or <b>whatsapp</b> in data.js to enable ordering.";
+}
+function bunyi(kuat) { try { if (TG && TG.HapticFeedback) TG.HapticFeedback.impactOccurred(kuat || "light"); } catch (e) {} }
+
+/* ---------- micro-interaction: item terbang ke ikon cart ---------- */
+function lantunBadge() {
+  const b = document.getElementById("badge");
+  if (!b) return;
+  b.classList.remove("lantun"); void b.offsetWidth; b.classList.add("lantun");
+}
+function terbangKeCart(dariEl) {
+  try {
+    const badge = document.getElementById("badge");
+    if (!badge || !dariEl) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches) return;
+    const a = dariEl.getBoundingClientRect(), b = badge.getBoundingClientRect();
+    const titik = document.createElement("span");
+    titik.className = "terbang"; titik.textContent = "1";
+    const x0 = a.left + a.width / 2, y0 = a.top + a.height / 2;
+    titik.style.left = x0 + "px"; titik.style.top = y0 + "px";
+    document.body.appendChild(titik);
+    void titik.offsetWidth;            // reflow: pastikan keadaan awal direkod sebelum animasi
+    titik.style.transform = "translate(" + (b.left + b.width / 2 - x0) + "px,"
+      + (b.top + b.height / 2 - y0) + "px) scale(.35)";
+    titik.style.opacity = ".25";
+    setTimeout(() => { titik.remove(); lantunBadge(); bunyi("medium"); }, 500);
+  } catch (e) {}
+}
+
+/* ---------- reveal bila item masuk skrin ---------- */
+let pemantauReveal = null;
+function pasangReveal(nod) {
+  const senarai = [...nod];
+  if (!senarai.length) return;
+  if (!("IntersectionObserver" in window)) { senarai.forEach(e => e.classList.add("nampak")); return; }
+  senarai.forEach((e, i) => { e.style.transitionDelay = (i % 6) * 35 + "ms"; });
+  if (pemantauReveal) pemantauReveal.disconnect();
+  pemantauReveal = new IntersectionObserver(masuk => {
+    masuk.forEach(m => {
+      if (m.isIntersecting) { m.target.classList.add("nampak"); pemantauReveal.unobserve(m.target); }
+    });
+  }, { rootMargin: "0px 0px -40px 0px", threshold: 0.04 });
+  senarai.forEach(e => pemantauReveal.observe(e));
+  /* jaring keselamatan: apa-apa yang sudah dalam skrin ditunjuk selepas 1.2s */
+  setTimeout(() => {
+    senarai.forEach(e => {
+      if (!e.classList.contains("nampak") && e.getBoundingClientRect().top < window.innerHeight)
+        e.classList.add("nampak");
+    });
+  }, 1200);
+}
+function toast(m) {
+  const t = document.getElementById("toast"); t.textContent = m; t.classList.add("on");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("on"), 1700);
+}
+
+/* ---------- hantar pesanan ---------- */
+/* Telegram had payload /start kepada 64 aksara, jadi pesanan dipadatkan kepada
+   indeks menu (cth "S1:2" = kategori 1, item 1, kuantiti 2). Bot akan leraikan
+   indeks ini kepada nama dan harga sebenar. */
+function kodPesanan() {
+  const bahagian = [];
+  cart.forEach(x => {
+    const kod = (x.k != null ? x.k : x.n) + ((x.a && x.a.length) ? "+" + x.a.join(",") : "");
+    bahagian.push(kod + ":" + x.q);
+  });
+  const phone = (document.getElementById("tel").value || "").replace(/\D/g, "");
+  /* "P" = pick up. App ini tidak menyediakan delivery; "D" hanya keserasian bot. */
+  return bahagian.join(";") + "|P|" + phone;   // ';' antara item, ',' antara add-on
+}
+function base64url(s) {
+  return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function teksPesananPenuh() {
+  const s = D.SHOP;
+  const nama = (document.getElementById("nm").value || "").trim();
+  const tel = (document.getElementById("tel").value || "").trim();
+  const nota = (document.getElementById("nota").value || "").trim();
+  let t = "NEW ORDER — " + s.nama + "\n";
+  t += "Method: " + cara + "\n";
+  if (nama) t += "Name: " + nama + "\n";
+  if (tel) t += "Phone: " + tel + "\n\n";
+  cart.forEach(x => { t += x.q + "x " + x.n + " = " + RM(x.h * x.q) + "\n"; });
+  t += "\nTOTAL: " + RM(jumlah()) + "\n";
+  if (nota) t += "Notes: " + nota + "\n";
+  return t;
+}
+document.getElementById("btnHantar").onclick = async () => {
+  if (!cart.length) return;
+  const s = D.SHOP;
+  const penuh = teksPesananPenuh();
+
+  // 1) Bila app dibuka dari butang papan-kekunci bot, Telegram boleh hantar data terus.
+  try {
+    if (TG && TG.sendData && TG.initData && /\bweb_app_data\b/.test(TG.initData)) {
+      TG.sendData(kodPesanan()); toast("Order sent"); return;
+    }
+  } catch (e) {}
+
+  // 2) Jalan biasa: deeplink ke bot dengan kod pesanan yang padat (≤64 aksara).
+  const kod = "O" + base64url(kodPesanan());
+  if (s.telegramBot && kod.length <= 64) {
+    const url = "https://t.me/" + s.telegramBot + "?start=" + kod;
+    if (TG && TG.openTelegramLink) TG.openTelegramLink(url); else window.open(url, "_blank");
+    toast("Press Start in Telegram to confirm");
+    return;
+  }
+
+  // 3) Terlalu panjang atau tiada bot: salin teks penuh, buka bot untuk tampal.
+  try { await navigator.clipboard.writeText(penuh); toast("Order copied — paste it into the shop chat"); }
+  catch (e) { toast("Re-type your order in the shop chat"); }
+  if (s.telegramBot) {
+    const url = "https://t.me/" + s.telegramBot;
+    if (TG && TG.openTelegramLink) TG.openTelegramLink(url); else window.open(url, "_blank");
+  }
+};
+
+/* ---------- gallery + lokasi ---------- */
+function lukisGal() {
+  document.getElementById("galGrid").innerHTML = D.GALLERY.map(g => `<figure>
+      <img src="${esc(g.img)}" alt="" loading="lazy"
+           onerror="this.parentNode.innerHTML='<div class=\'fallback\'>☕</div>'">
+    </figure>`).join("");
+  pasangReveal(document.querySelectorAll("#galGrid figure"));
+}
+function lukisLok() {
+  const s = D.SHOP;
+  document.getElementById("lAlamat").textContent = s.alamat;
+  document.getElementById("lWaktu").textContent =
+    "Daily " + s.buka + " – " + (s.tutup === "24:00" ? "12:00 midnight" : s.tutup);
+  document.getElementById("btnWaze").href = "https://waze.com/ul?q=" + encodeURIComponent(s.wazeQuery) + "&navigate=yes";
+  document.getElementById("btnMaps").href = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(s.mapsQuery);
+  document.getElementById("btnIg").href = s.instagram;
+  const galIg = document.getElementById("galIg");
+  if (galIg) galIg.href = s.instagram;
+  // sosial: tunjuk butang hanya kalau link diisi dalam data.js
+  [["btnTt", s.tiktok], ["btnFb", s.facebook], ["btnTh", s.threads]].forEach(([id, url]) => {
+    const el = document.getElementById(id);
+    if (url) { el.href = url; el.style.display = "flex"; } else { el.style.display = "none"; }
+  });
+  if (s.whatsapp) {
+    const b = document.getElementById("btnWa");
+    b.style.display = "flex";
+    b.href = "https://wa.me/" + s.whatsapp;
+  }
+}
+
+/* ---------- navigasi ---------- */
+function bukaTab(s) {
+  const susunan = ["home", "troli", "gal", "lok"];
+  const aktif = document.querySelector(".nav-in button.on");
+  const lama = aktif ? aktif.dataset.s : null;
+  document.querySelectorAll(".nav-in button").forEach(x => x.classList.toggle("on", x.dataset.s === s));
+  document.querySelectorAll("section").forEach(x => {
+    x.classList.remove("on", "masuk-kanan", "masuk-kiri");
+  });
+  const sec = document.getElementById("s-" + s);
+  if (sec) {
+    void sec.offsetWidth;                                   // reset animasi
+    const iBaru = susunan.indexOf(s), iLama = susunan.indexOf(lama);
+    sec.classList.add(lama && iLama >= 0 && iBaru < iLama ? "masuk-kiri" : "masuk-kanan");
+    sec.classList.add("on");
+  }
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll(".nav-in button").forEach(b => b.onclick = () => bukaTab(b.dataset.s));
+function bukaViewer() {
+  document.getElementById("viewer").classList.add("on");
+  document.body.style.overflow = "hidden";
+}
+function tutupViewer() {
+  document.getElementById("viewer").classList.remove("on");
+  document.body.style.overflow = "";
+}
+
+/* ---------- home + order ---------- */
+function lukisHome() {
+  const hg = document.getElementById("homeGal");
+  if (D.HOME && D.HOME.length) {
+    hg.innerHTML = D.HOME.map(h => `<figure>
+        <img src="${esc(h.img)}" alt="" loading="lazy">
+        ${h.tajuk ? `<figcaption><b>${esc(h.tajuk)}</b>${h.sari ? " · " + esc(h.sari) : ""}</figcaption>` : ""}
+      </figure>`).join("");
+  } else {
+    hg.style.display = "none";          // belum ada gambar muka utama
+  }
+  document.getElementById("homeStatus").textContent = statusKedai().buka
+    ? "Open now · " + D.SHOP.buka + " – " + (D.SHOP.tutup === "24:00" ? "12:00 midnight" : D.SHOP.tutup)
+    : "Closed · opens " + D.SHOP.buka;
+  document.querySelectorAll("[data-pergi]").forEach(b => b.onclick = () => bukaTab(b.dataset.pergi));
+
+  // Order — tiga pilihan
+  const link = document.getElementById("linkHantar");
+  const plat = [["foodpanda", "foodpanda"], ["shopeefood", "ShopeeFood"],
+                ["grabfood", "GrabFood"], ["whatsapp", "WhatsApp"]];
+  const ada = plat.filter(([k]) => D.SHOP[k]);
+  link.innerHTML = ada.length
+    ? ada.map(([k, nama]) => `<a href="${esc(D.SHOP[k])}" target="_blank" rel="noopener">Order on ${esc(nama)}</a>`).join("")
+    : `<a style="opacity:.5;cursor:default">Delivery links coming soon</a>`;
+  document.querySelectorAll("#opsiOrder [data-opsi]").forEach(b => b.onclick = () => {
+    const p = b.dataset.opsi;
+    if (p === "menu") { bukaViewer(); return; }                 // 3) buka gambar menu
+    if (p === "delivery") {                                     // 2) dropdown platform
+      const buka = link.classList.toggle("buka");
+      document.getElementById("anakDelivery").textContent = buka ? "−" : "+";
+      return;
+    }
+    const bina = document.getElementById("orderBuilder");        // 1) pickup at store
+    bina.style.display = "block";
+    (cart.length ? document.getElementById("cartForm") : bina).scrollIntoView({ behavior: "smooth" });
+  });
+}
+
+/* ---------- mula ---------- */
+(function mula() {
+  lukisChips(); lukisMenu(); lukisCart(); lukisGal(); lukisLok(); lukisHome();
+  // logo rasmi menggantikan perkataan KOFFIE bila SHOP.logo diisi dalam data.js
+  if (D.SHOP.logo) {
+    document.querySelector(".brand").innerHTML =
+      `<img src="${esc(D.SHOP.logo)}" alt="${esc(D.SHOP.nama)}">`;
+  }
+  // gambar menu rasmi: tekan untuk besarkan
+  const viewer = document.getElementById("viewer");
+  document.getElementById("bukaMenuImg").onclick = bukaViewer;   // Menu tab → gambar menu penuh
+  document.getElementById("viewerTutup").onclick = () => {
+    viewer.classList.remove("on"); document.body.style.overflow = "";
+  };
+  try {
+    const u = TG && TG.initDataUnsafe && TG.initDataUnsafe.user;
+    if (u && u.first_name) document.getElementById("nm").value =
+      (u.first_name + " " + (u.last_name || "")).trim();
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
