@@ -118,6 +118,7 @@
   input,select,textarea{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--ink);
     border-radius:11px;padding:11px 12px;font-size:14px;font-family:inherit}
   textarea{resize:vertical;min-height:60px}
+  input.salah{border-color:var(--no)}
   .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .seg button{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:11px;
     padding:11px;font-size:13px;font-family:inherit;cursor:pointer}
@@ -733,13 +734,21 @@ function toast(m) {
 /* Telegram had payload /start kepada 64 aksara, jadi pesanan dipadatkan kepada
    indeks menu (cth "S1:2" = kategori 1, item 1, kuantiti 2). Bot akan leraikan
    indeks ini kepada nama dan harga sebenar. */
+/* Normalisasi nombor telefon Malaysia -> 60xxxxxxxxx (tanpa '+'), atau null jika tak sah.
+   Terima: 01x-xxxxxxx / 01x xxxxxxx / 01xxxxxxxx (10-11 digit mula '0'), atau 60xxxxxxxxx. */
+function normalisasiTel(raw) {
+  let d = String(raw == null ? "" : raw).replace(/\D/g, "");
+  if (!d) return null;
+  if (d[0] === "0") d = "60" + d.slice(1);    // awalan '0' -> '60'
+  return /^60\d{9,10}$/.test(d) ? d : null;   // 60 + 9..10 digit
+}
 function kodPesanan() {
   const bahagian = [];
   cart.forEach(x => {
     const kod = (x.k != null ? x.k : x.n) + ((x.a && x.a.length) ? "+" + x.a.join(",") : "");
     bahagian.push(kod + ":" + x.q);
   });
-  const phone = (document.getElementById("tel").value || "").replace(/\D/g, "");
+  const phone = normalisasiTel(document.getElementById("tel").value) || "";
   /* "P" = pick up. App ini tidak menyediakan delivery; "D" hanya keserasian bot. */
   return bahagian.join(";") + "|P|" + phone;   // ';' antara item, ',' antara add-on
 }
@@ -749,7 +758,7 @@ function base64url(s) {
 function teksPesananPenuh() {
   const s = D.SHOP;
   const nama = (document.getElementById("nm").value || "").trim();
-  const tel = (document.getElementById("tel").value || "").trim();
+  const tel = normalisasiTel(document.getElementById("tel").value) || "";
   const nota = (document.getElementById("nota").value || "").trim();
   let t = "NEW ORDER — " + s.nama + "\n";
   t += "Method: " + cara + "\n";
@@ -763,6 +772,22 @@ function teksPesananPenuh() {
 document.getElementById("btnHantar").onclick = async () => {
   if (!cart.length) return;
   const s = D.SHOP;
+  const elNm = document.getElementById("nm");
+  const elTel = document.getElementById("tel");
+  if (!(elNm.value || "").trim()) {
+    elNm.classList.add("salah");
+    toast("Enter your name");
+    elNm.focus();
+    return;
+  }
+  elNm.classList.remove("salah");
+  if (!normalisasiTel(elTel.value)) {
+    elTel.classList.add("salah");
+    toast("Enter a valid phone number, e.g. 012-345 6789");
+    elTel.focus();
+    return;
+  }
+  elTel.classList.remove("salah");
   const penuh = teksPesananPenuh();
 
   // 1) Bila app dibuka dari butang papan-kekunci bot, Telegram boleh hantar data terus.
@@ -789,6 +814,8 @@ document.getElementById("btnHantar").onclick = async () => {
     if (TG && TG.openTelegramLink) TG.openTelegramLink(url); else window.open(url, "_blank");
   }
 };
+document.getElementById("nm").addEventListener("input", function(){ this.classList.remove("salah"); });
+document.getElementById("tel").addEventListener("input", function(){ this.classList.remove("salah"); });
 
 /* ---------- gallery + lokasi ---------- */
 function lukisGal() {
