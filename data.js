@@ -164,20 +164,6 @@ window.KOFFIE_DATA = {
   ],
 
   /* -------------------------------------------------------------------
-     HOME_3D — kad logo 3D berputar di atas gambar Home.
-     hidup:false → kad tak muncul langsung (app nampak macam sebelum ini)
-     tinggi      → tinggi kad dalam px (lebar ikut skrin telefon)
-     arahan      → teks kecil bawah kad (ENGLISH — ini UI customer)
-     gambar      → gambar statik fallback bila WebGL gagal / reduced-motion
-     ------------------------------------------------------------------- */
-  HOME_3D: {
-    hidup: true,
-    tinggi: 280,
-    arahan: "Drag to spin",
-    gambar: "assets/hero-3d.jpg",
-  },
-
-  /* -------------------------------------------------------------------
      HOME — gambar muka utama app (carousel di tab Home).
      Letak fail dalam assets/home/ dan senaraikan di bawah.
      ------------------------------------------------------------------- */

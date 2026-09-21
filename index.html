@@ -218,18 +218,6 @@
     color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.88))}
   .home-gal figcaption b{font-weight:600}
 
-  /* ---------- kad 3D logo (Home) — hidup/mati dari data.js → HOME_3D ---------- */
-  .hero3d{margin:0 -16px 10px;position:relative;background:#0a0b0d;overflow:hidden;
-    touch-action:pan-y;transition:height .2s ease}
-  .hero3d[hidden]{display:none}
-  .hero3d img,.hero3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-  .hero3d img{object-fit:contain;transition:opacity .5s ease}
-  .hero3d.terang img{opacity:0}                     /* kanvas ambil alih */
-  .hero3d canvas{touch-action:pan-y}
-  .hero3d figcaption{position:absolute;left:0;right:0;bottom:0;padding:30px 15px 11px;font-size:10.5px;
-    letter-spacing:.18em;text-transform:uppercase;color:var(--muted);pointer-events:none;
-    background:linear-gradient(transparent,rgba(0,0,0,.82))}
-
   /* ---------- order options ---------- */
   .opsi{display:grid;gap:10px;margin-bottom:18px}
   .opsi-kad{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--panel);
@@ -266,13 +254,6 @@
 
   <!-- ================= HOME ================= -->
   <section id="s-home" class="on">
-    <!-- Kad 3D logo KOFFIE. Hidup/mati + teks dari data.js → HOME_3D.
-         Gambar statik assets/hero-3d.jpg jadi fallback kalau WebGL/reduced-motion. -->
-    <figure class="hero3d" id="hero3d" hidden>
-      <img id="hero3dImg" src="assets/hero-3d.jpg" alt="KOFFIE">
-      <canvas id="hero3dKanvas"></canvas>
-      <figcaption id="hero3dArahan">Drag to spin</figcaption>
-    </figure>
     <div class="home-gal" id="homeGal"></div>
     <div class="info">
       <div class="lbl">Today</div>
@@ -411,23 +392,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="data.js?v=20260921b"></script>
-<script>
-/* Kad 3D logo (Home): tunjuk gambar statik kalau HOME_3D hidup.
-   hero3d.js (type=module) naik taraf ia kepada kanvas 3D bila WebGL tersedia. */
-(function () {
-  try {
-    const c = window.KOFFIE_DATA && window.KOFFIE_DATA.HOME_3D;
-    if (!(c === true || (c && c.hidup !== false))) return;
-    const f = document.getElementById("hero3d");
-    if (!f) return;
-    f.style.height = ((c && c.tinggi) || 280) + "px";
-    if (c && c.gambar) document.getElementById("hero3dImg").src = c.gambar;
-    if (c && c.arahan) document.getElementById("hero3dArahan").textContent = c.arahan;
-    f.hidden = false;
-  } catch (e) {}
-})();
-</script>
+<script src="data.js?v=20260921c"></script>
 <script>
 /* =====================================================================
    KOFFIE mini app — logik. Jangan perlu edit kecuali kau nak ubah tingkah laku.
@@ -969,6 +934,5 @@ function lukisHome() {
   } catch (e) {}
 })();
 </script>
-<script type="module" src="hero3d.js?v=20260921"></script>
 </body>
 </html>
