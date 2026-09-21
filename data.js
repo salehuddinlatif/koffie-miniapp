@@ -4,7 +4,6 @@
    Dibaca terus dari gambar menu rasmi (assets/menu.jpg).
    Harga: panas = harga Hot, sejuk = harga Cold. null = tak ada.
    Harga dikemas kini: 17 Sep 2026 (ikut menu cetak bertanda merah).
-   Add-on "Vanilla Cold Foam" (RM3.00) ditambah 20 Sep 2026 ikut menu master.
    EDIT FAIL INI SAHAJA untuk kemas kini menu / harga / maklumat.
    ===================================================================== */
 
@@ -130,7 +129,6 @@ window.KOFFIE_DATA = {
         { nama: "Extra Shot",     panas: 2.00, sejuk: 2.00, nota: "", img: "" },
         { nama: "Upsize",         panas: 3.00, sejuk: 3.00, nota: "", img: "" },
         { nama: "Whipping Cream", panas: 2.00, sejuk: 2.00, nota: "", img: "" },
-        { nama: "Vanilla Cold Foam", panas: 3.00, sejuk: 3.00, nota: "", img: "" },
         { nama: "Oatmilk",        panas: 3.00, sejuk: 3.00, nota: "", img: "" },
         { nama: "Frappe",         panas: 2.00, sejuk: 2.00, nota: "", img: "" },
         { nama: "Topping",        panas: 1.50, sejuk: 1.50, nota: "Pick any", img: "", banyak: true,
