@@ -124,13 +124,18 @@ window.KOFFIE_DATA = {
       nota: "Add to any drink",
       /* item tanpa "pilihan" = kotak semak (boleh pilih banyak).
          item dengan "pilihan" = dropdown (pilih SATU); harga ikut pilihan itu.
+         "kecuali": ["NAMA KATEGORI"] = add-on ini disembunyikan untuk minuman dalam
+         kategori itu (contoh: add-on "Frappe" tak muncul pada minuman FRAPPE).
+         "kecualiMinuman": ["Nama minuman"] = sembunyikan untuk minuman tertentu sahaja.
          Kategori ini tidak muncul sebagai chip — ia dibaca oleh sheet setiap minuman. */
       item: [
         { nama: "Extra Shot",     panas: 2.00, sejuk: 2.00, nota: "", img: "" },
         { nama: "Upsize",         panas: 3.00, sejuk: 3.00, nota: "", img: "" },
         { nama: "Whipping Cream", panas: 2.00, sejuk: 2.00, nota: "", img: "" },
         { nama: "Oatmilk",        panas: 3.00, sejuk: 3.00, nota: "", img: "" },
-        { nama: "Frappe",         panas: 2.00, sejuk: 2.00, nota: "", img: "" },
+        { nama: "Frappe",         panas: 2.00, sejuk: 2.00, nota: "", img: "",
+          kecuali: ["FRAPPE", "SIGNATURE SERIES"],
+          kecualiMinuman: ["Espresso", "Cold Brew", "Americano"] },
         { nama: "Topping",        panas: 1.50, sejuk: 1.50, nota: "Pick any", img: "", banyak: true,
           pilihan: [
             { nama: "Chocolate Chip", harga: 1.50 },

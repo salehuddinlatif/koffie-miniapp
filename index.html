@@ -392,7 +392,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="data.js?v=20260921c"></script>
+<script src="data.js?v=20260922c"></script>
 <script>
 /* =====================================================================
    KOFFIE mini app — logik. Jangan perlu edit kecuali kau nak ubah tingkah laku.
@@ -485,12 +485,20 @@ function lukisMenu() {
   pasangReveal(w.querySelectorAll(".item"));
 }
 
-/* add-on: diambil dari kategori "ADD-ON" dalam data.js */
-function senaraiAddon() {
+/* add-on: diambil dari kategori "ADD-ON" dalam data.js.
+   ciMinuman = indeks kategori minuman yang sedang dibuka, namaMinuman = nama minuman itu.
+   `kecuali` menyenaraikan KATEGORI, `kecualiMinuman` menyenaraikan minuman tertentu
+   (contoh add-on "Frappe" pada minuman FRAPPE, atau pada Espresso / Cold Brew / Americano). */
+function senaraiAddon(ciMinuman, namaMinuman) {
   const ci = D.MENU.findIndex(k => k.kategori.toUpperCase().replace(/[^A-Z]/g, "").includes("ADDON"));
   if (ci < 0) return [];
+  const kat = (ciMinuman != null && D.MENU[ciMinuman])
+    ? String(D.MENU[ciMinuman].kategori || "").toUpperCase() : "";
+  const nama = String(namaMinuman || "").trim().toUpperCase();
   return D.MENU[ci].item.map((a, ii) => ({ ...a, ci, ii,
-    harga: (a.sejuk != null ? a.sejuk : a.panas) }));
+    harga: (a.sejuk != null ? a.sejuk : a.panas) }))
+    .filter(a => !(a.kecuali || []).some(x => String(x).toUpperCase() === kat))
+    .filter(a => !(a.kecualiMinuman || []).some(x => String(x).trim().toUpperCase() === nama));
 }
 
 /* Satu sheet untuk setiap minuman: suhu (kalau perlu) + add-on + jumlah */
@@ -502,7 +510,7 @@ function pilihItem(it, ci, ii) {
   const adaPanas = it.panas != null, adaSejuk = it.sejuk != null;
   const perluSuhu = adaPanas && adaSejuk;
   let suhu = perluSuhu ? "" : (adaSejuk ? "s" : "p");
-  const addon = senaraiAddon();
+  const addon = senaraiAddon(ci, it.nama);
 
   const adaFlavor = !!(it.pilihan && it.pilihan.length);   // minuman yang ada pilihan perisa
   let flavor = null;                                       // indeks perisa terpilih
@@ -622,6 +630,27 @@ let cart = [];
 try { cart = JSON.parse(localStorage.getItem("koffie_cart") || "[]") || []; } catch (e) { cart = []; }
 const cara = "Pick up";    /* app ini pick up sahaja — delivery melalui platform lain */
 const simpan = () => localStorage.setItem("koffie_cart", JSON.stringify(cart));
+/* Troli kosong selepas pesanan dihantar — supaya pelanggan tak tersalah hantar
+   pesanan lama dua kali bila dia buka app semula. */
+function kosongkanCart() { cart = []; simpan(); lukisCart(); }
+
+/* Kenalan pelanggan disimpan pada peranti dia sendiri supaya pesanan berikutnya
+   tak perlu taip nama/telefon/nota semula. Nama dari Telegram menang kalau ada. */
+function el(id) { return document.getElementById(id); }
+function simpanKenalan() {
+  try {
+    localStorage.setItem("koffie_kenalan", JSON.stringify({
+      nm: el("nm").value, tel: el("tel").value, nota: el("nota").value }));
+  } catch (e) {}
+}
+function pulihKenalan() {
+  try {
+    const k = JSON.parse(localStorage.getItem("koffie_kenalan") || "{}") || {};
+    if (k.tel) el("tel").value = k.tel;
+    if (k.nota) el("nota").value = k.nota;
+    if (k.nm && !(el("nm").value || "").trim()) el("nm").value = k.nm;
+  } catch (e) {}
+}
 
 function tambah(nama, harga, kunci, suhu, addons, kodAddon, dariEl) {
   const label = nama + " (" + suhu + ")";
@@ -654,7 +683,7 @@ function lukisCart() {
   const kosong = !cart.length;
   document.getElementById("cartEmpty").style.display = kosong ? "block" : "none";
   document.getElementById("cartForm").style.display = kosong ? "none" : "block";
-  if (kosong) { list.innerHTML = ""; return; }
+  if (kosong) { list.innerHTML = ""; document.getElementById("total").textContent = RM(0); return; }
   list.innerHTML = cart.map((x, i) => `<div class="baris">
       <div class="nm">${esc(x.n)}${(x.an && x.an.length)
         ? `<span class="addon-kecil">${x.an.map(a => "+ " + esc(a.nama) + " " + RM(a.harga)).join("<br>")}</span>` : ""}</div>
@@ -742,15 +771,34 @@ function normalisasiTel(raw) {
   if (d[0] === "0") d = "60" + d.slice(1);    // awalan '0' -> '60'
   return /^60\d{9,10}$/.test(d) ? d : null;   // 60 + 9..10 digit
 }
-function kodPesanan() {
+/* Kod pesanan: "items|P|telefon|nota" (nota kosong kalau tiada).
+   Nota tidak boleh mengandungi "|" atau baris baharu - ia pemisah medan kod. */
+function notaBersih() {
+  return String(el("nota").value || "")
+    .replace(/[|\r\n\t]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function kodPesananDengan(nota) {
   const bahagian = [];
   cart.forEach(x => {
     const kod = (x.k != null ? x.k : x.n) + ((x.a && x.a.length) ? "+" + x.a.join(",") : "");
     bahagian.push(kod + ":" + x.q);
   });
-  const phone = normalisasiTel(document.getElementById("tel").value) || "";
-  /* "P" = pick up. App ini tidak menyediakan delivery; "D" hanya keserasian bot. */
-  return bahagian.join(";") + "|P|" + phone;   // ';' antara item, ',' antara add-on
+  const phone = normalisasiTel(el("tel").value) || "";
+  return bahagian.join(";") + "|P|" + phone + (nota ? "|" + nota : "");
+}
+function kodPesanan() { return kodPesananDengan(notaBersih()); }
+/* Kod yang PASTI muat: Telegram hadkan payload /start kepada 64 aksara, jadi nota
+   dipendekkan sehingga kod muat. dipangkas=true -> pelanggan dimaklumkan. */
+function kodPesananMuat() {
+  const nota = notaBersih();
+  const bina = n => "O" + base64url(kodPesananDengan(n));
+  if (bina(nota).length <= 64) return { kod: bina(nota), dipangkas: false, nota: nota };
+  let n = nota;
+  while (n.length > 0 && bina(n + "\u2026").length > 64) n = n.slice(0, -1);
+  if (!n) return { kod: bina(""), dipangkas: true, nota: "" };
+  return { kod: bina(n + "\u2026"), dipangkas: true, nota: n };
 }
 function base64url(s) {
   return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -788,27 +836,33 @@ document.getElementById("btnHantar").onclick = async () => {
     return;
   }
   elTel.classList.remove("salah");
+  simpanKenalan();                       // ingat nama/telefon/nota untuk pesanan berikutnya
   const penuh = teksPesananPenuh();
 
   // 1) Bila app dibuka dari butang papan-kekunci bot, Telegram boleh hantar data terus.
   try {
     if (TG && TG.sendData && TG.initData && /\bweb_app_data\b/.test(TG.initData)) {
-      TG.sendData(kodPesanan()); toast("Order sent"); return;
+      TG.sendData(kodPesanan()); kosongkanCart(); toast("Order sent — cart cleared"); return;
     }
   } catch (e) {}
 
   // 2) Jalan biasa: deeplink ke bot dengan kod pesanan yang padat (≤64 aksara).
-  const kod = "O" + base64url(kodPesanan());
+  const padat = kodPesananMuat();
+  const kod = padat.kod;
   if (s.telegramBot && kod.length <= 64) {
     const url = "https://t.me/" + s.telegramBot + "?start=" + kod;
     if (TG && TG.openTelegramLink) TG.openTelegramLink(url); else window.open(url, "_blank");
-    toast("Press Start in Telegram to confirm");
+    kosongkanCart();                     // pesanan sudah keluar dari app — troli dikosongkan
+    toast(padat.dipangkas
+      ? "Order sent — note shortened, please confirm the rest with the shop"
+      : "Order sent — press Start in Telegram");
     return;
   }
 
   // 3) Terlalu panjang atau tiada bot: salin teks penuh, buka bot untuk tampal.
   try { await navigator.clipboard.writeText(penuh); toast("Order copied — paste it into the shop chat"); }
   catch (e) { toast("Re-type your order in the shop chat"); }
+  kosongkanCart();
   if (s.telegramBot) {
     const url = "https://t.me/" + s.telegramBot;
     if (TG && TG.openTelegramLink) TG.openTelegramLink(url); else window.open(url, "_blank");
@@ -915,7 +969,7 @@ function lukisHome() {
 
 /* ---------- mula ---------- */
 (function mula() {
-  lukisChips(); lukisMenu(); lukisCart(); lukisGal(); lukisLok(); lukisHome();
+  lukisChips(); lukisMenu(); lukisCart(); pulihKenalan(); lukisGal(); lukisLok(); lukisHome();
   // logo rasmi menggantikan perkataan KOFFIE bila SHOP.logo diisi dalam data.js
   if (D.SHOP.logo) {
     document.querySelector(".brand").innerHTML =
