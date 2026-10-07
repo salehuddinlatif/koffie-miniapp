@@ -30,7 +30,7 @@ window.KOFFIE_DATA = {
     grabfood: "",                    // kalau ada
     wazeQuery: "Koffie Jln Mentol, Kg Gubah, 85000 Segamat Johor",
     mapsQuery: "Koffie Jln Mentol Segamat",
-    menuImg: "assets/menu-2026-09.jpg",  // gambar menu rasmi (harga Sep 2026)
+    menuImg: "assets/menu-2026-09-hijau.jpg",  // gambar menu rasmi (harga Sep 2026, palet hijau)
   },
 
   /* -------------------------------------------------------------------

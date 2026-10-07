@@ -174,16 +174,25 @@
   .kotak.on{display:flex}
 
   /* ---------- Koffie Club ---------- */
-  .club-btn{display:flex;align-items:center;gap:9px;justify-content:center;
-    background:var(--accent);border-color:var(--accent);color:#f4f1ea;font-weight:700}
-  .club-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  /* Baris penuh (bukan butang kecil terampai) — gaya sama seperti baris pilihan Pick up/Delivery/Menu */
+  .club-tajuk{color:var(--accent2)}
+  .club-kad{display:flex;align-items:center;gap:13px;width:100%;text-align:left;margin:2px 0 18px;
+    background:var(--panel);border:1px solid rgba(79,201,138,.35);border-radius:var(--radius);
+    padding:14px;color:var(--ink);font-family:inherit;cursor:pointer}
+  .club-ikon{flex:0 0 auto;width:38px;height:38px;border-radius:11px;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;color:#f4f1ea}
+  .club-ikon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .club-teks{flex:1;display:flex;flex-direction:column;gap:3px}
+  .club-teks b{font-size:14.5px;font-weight:600}
+  .club-teks i{font-size:11.5px;color:var(--accent2);font-style:normal}
+  .club-anak{color:var(--accent2);font-size:19px;padding-right:2px}
   .club-nama{font-size:19px;font-weight:700;margin:2px 0 12px}
   .club-bar{display:none;margin-top:7px;font-size:12px;color:var(--accent2);line-height:1.5}
   .club-badge{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:10px;
     letter-spacing:.08em;background:var(--accent);color:#f4f1ea;vertical-align:middle}
   /* Saiz tetap + flexbox — JANGAN guna aspect-ratio: WebView Telegram lama tak sokong,
      bulatan jadi tinggi 0 dan stamp "hilang" walaupun kad nampak. */
-  .club-grid{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0 16px}
+  .club-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;justify-items:center;margin:12px 0 16px}
   .club-stamp{width:46px;height:46px;flex:0 0 auto;border-radius:50%;
     border:1px solid rgba(79,201,138,.45);display:flex;
     align-items:center;justify-content:center;font-size:13px;color:#7fc9a5}
@@ -282,14 +291,13 @@
       <div class="val" id="homeStatus"></div>
     </div>
     <!-- Koffie Club: kad ahli (data dari endpoint Apps Script melalui JSONP — CORS disekat) -->
-    <div class="info">
-      <div class="lbl">Koffie Club</div>
-      <button class="btn club-btn" id="btnClub">
+    <button class="club-kad" id="btnClub">
+      <span class="club-ikon">
         <svg viewBox="0 0 24 24"><path d="M4 7h13v5.5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V7z"/><path d="M17 8.5h1.6a2.1 2.1 0 0 1 0 4.2H17"/><path d="M5 20h12"/></svg>
-        Koffie Club
-      </button>
-      <div class="kecil">Stamps &amp; rewards — free to join</div>
-    </div>
+      </span>
+      <span class="club-teks"><b>Koffie Club</b><i>Your exclusive coffee perks.</i></span>
+      <span class="club-anak">›</span>
+    </button>
     <!-- media sosial (dipindah dari tab Find Us) -->
     <div class="info">
       <div class="lbl">Follow us</div>
@@ -418,7 +426,7 @@
 <div class="viewer" id="viewer">
   <div class="kepala">KOFFIE MENU</div>
   <button class="tutup" id="viewerTutup" aria-label="Close">✕</button>
-  <img id="viewerImg" src="assets/menu-2026-09.jpg" alt="Menu KOFFIE">
+  <img id="viewerImg" src="assets/menu-2026-09-hijau.jpg" alt="Menu KOFFIE">
 </div>
 <div class="kotak" id="suhu"></div>
 <div class="kotak" id="club"></div>
@@ -426,7 +434,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="data.js?v=20260922c"></script>
+<script src="data.js?v=20261008a"></script>
 <script>
 /* =====================================================================
    KOFFIE mini app — logik. Jangan perlu edit kecuali kau nak ubah tingkah laku.
@@ -673,7 +681,7 @@ function bukaClub() {
   // dan muatAhli() terhenti awal (ahliSiap), jadi panel tersangkut pada 'Loading…'.
   if (!kotak.querySelector("#clubBadan")) {
     kotak.innerHTML = `<div class="kotak-in">
-      <div class="kotak-tajuk">Koffie Club</div>
+      <div class="kotak-tajuk club-tajuk">Koffie Club</div>
       <div class="kotak-sub">Your card</div>
       <div id="clubBadan"><div class="kecil">Loading…</div></div>
       <button class="club-tutup" id="clubTutup">Close</button>
