@@ -696,13 +696,15 @@ function muatAhli(paksa) {
   badan.innerHTML = `<div class="kecil">Loading…</div>`;
 
   // JSONP: satu laluan tarik ahli (sama seperti paparan diskaun pada troli)
-  tarikAhli(function (d) {
-    if (!d || d.ok !== true) {
-      badan.innerHTML = `<div class="kecil">Could not load your card${d && d.ralat ? " (" + esc(d.ralat) + ")" : ""}.</div>`;
+  tarikAhli(function (a) {          // tarikAhli memberi OBJEK AHLI (atau null), bukan {ok, ahli}
+    if (!a) {
+      badan.innerHTML = `<div class="kecil">Could not load your card. Please try again.</div>
+        <button class="club-tutup" id="clubRefresh">Try again</button>`;
+      const rb0 = document.getElementById("clubRefresh");
+      if (rb0) rb0.onclick = () => muatAhli(true);
       return;
     }
     ahliSiap = true;
-    const a = d.ahli || {};
     const stamp = Math.max(0, Math.min(STAMP_SASARAN, Number(a.stamp || 0)));
     const sel = Array.from({ length: STAMP_SASARAN }, (_, i) =>
       `<div class="club-stamp${i < stamp ? " on" : ""}">${i < stamp ? "★" : i + 1}</div>`).join("");
@@ -777,19 +779,37 @@ function jumlah() { return cart.reduce((s, x) => s + x.h * x.q, 0); }
    Keadaan ahli dibaca dari server (JSONP); bot tetap mengira semula di server,
    jadi angka di sini hanya untuk paparan. */
 let AHLI = null;
-function tarikAhli(cb) {
+function tarikAhli(cb, cuba) {
   const init = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) ||
                (TG && TG.initData) || "";
   if (!init) { cb(null); return; }
+  cuba = cuba || 0;
   const nama = "koffieAhliCb" + (++tarikAhli.n);
-  window[nama] = d => {
-    const a = (d && d.ok) ? d.ahli : null;
+  let sudah = false, pemasa = null;
+  const guna = (a) => {
+    if (sudah) return; sudah = true;
+    if (pemasa) clearTimeout(pemasa);
+    const lama = document.getElementById(nama); if (lama) lama.remove();
     if (a) AHLI = a;
     cb(a);
   };
+  const gagal = () => {
+    if (sudah) return;
+    if (cuba < 1) {                       // Apps Script kerap lambat pada panggilan pertama
+      sudah = true; if (pemasa) clearTimeout(pemasa);
+      const lama = document.getElementById(nama); if (lama) lama.remove();
+      setTimeout(() => tarikAhli(cb, cuba + 1), 2000);
+    } else guna(null);
+  };
+  window[nama] = d => guna((d && d.ok) ? d.ahli : null);
   const s = document.createElement("script");
+  s.id = nama;
   s.src = AHLI_API + "?aksi=ahli&init=" + encodeURIComponent(init) + "&callback=" + nama;
-  s.onerror = () => cb(null);
+  s.onerror = gagal;
+  // Apps Script boleh lambat pada panggilan pertama selepas deploy (cold start).
+  // 12 s setiap cubaan + satu cuba-semula — cukup untuk kes lambat, tetapi skrip
+  // yang tergantung tetap ditangkap dan pelanggan dapat butang Try again.
+  pemasa = setTimeout(gagal, 12000);
   document.head.appendChild(s);
 }
 tarikAhli.n = 0;
