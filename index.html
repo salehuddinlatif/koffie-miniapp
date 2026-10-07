@@ -180,9 +180,12 @@
   .club-bar{display:none;margin-top:7px;font-size:12px;color:var(--accent);line-height:1.5}
   .club-badge{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:10px;
     letter-spacing:.08em;background:var(--accent);color:#141414;vertical-align:middle}
-  .club-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:8px 0 16px}
-  .club-stamp{aspect-ratio:1;border-radius:50%;border:1px solid rgba(217,168,108,.40);display:flex;
-    align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
+  /* Saiz tetap + flexbox — JANGAN guna aspect-ratio: WebView Telegram lama tak sokong,
+     bulatan jadi tinggi 0 dan stamp "hilang" walaupun kad nampak. */
+  .club-grid{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0 16px}
+  .club-stamp{width:46px;height:46px;flex:0 0 auto;border-radius:50%;
+    border:1px solid rgba(217,168,108,.55);display:flex;
+    align-items:center;justify-content:center;font-size:13px;color:#c8b48f}
   .club-stamp.on{background:var(--accent);border-color:var(--accent);color:#141414;font-weight:700}
   .club-baris{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;
     border-bottom:1px solid rgba(244,241,234,.09)}
