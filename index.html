@@ -172,6 +172,24 @@
   .kotak{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:110;display:none;
     align-items:flex-end;justify-content:center;padding:0 0 12px}
   .kotak.on{display:flex}
+
+  /* ---------- Koffie Club ---------- */
+  .club-btn{display:flex;align-items:center;gap:9px;justify-content:center}
+  .club-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .club-nama{font-size:19px;font-weight:700;margin:2px 0 12px}
+  .club-bar{display:none;margin-top:7px;font-size:12px;color:var(--accent);line-height:1.5}
+  .club-badge{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:10px;
+    letter-spacing:.08em;background:var(--accent);color:#141414;vertical-align:middle}
+  .club-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:8px 0 16px}
+  .club-stamp{aspect-ratio:1;border-radius:50%;border:1px solid rgba(217,168,108,.40);display:flex;
+    align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
+  .club-stamp.on{background:var(--accent);border-color:var(--accent);color:#141414;font-weight:700}
+  .club-baris{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;
+    border-bottom:1px solid rgba(244,241,234,.09)}
+  .club-baris b{color:var(--accent);font-weight:600}
+  .club-kod{font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.6}
+  .club-tutup{width:100%;margin-top:14px;background:transparent;color:#f4f1ea;border:1px solid rgba(244,241,234,.2);
+    border-radius:12px;padding:12px;font-family:inherit;font-size:13px;cursor:pointer}
   .kotak-in{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;
     width:100%;max-width:420px;text-align:center}
   .kotak-tajuk{font-size:15px;font-weight:600}
@@ -259,6 +277,15 @@
       <div class="lbl">Today</div>
       <div class="val" id="homeStatus"></div>
     </div>
+    <!-- Koffie Club: kad ahli (data dari endpoint Apps Script melalui JSONP — CORS disekat) -->
+    <div class="info">
+      <div class="lbl">Koffie Club</div>
+      <button class="btn club-btn" id="btnClub">
+        <svg viewBox="0 0 24 24"><path d="M4 7h13v5.5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V7z"/><path d="M17 8.5h1.6a2.1 2.1 0 0 1 0 4.2H17"/><path d="M5 20h12"/></svg>
+        Koffie Club
+      </button>
+      <div class="kecil">Stamps &amp; rewards — free to join</div>
+    </div>
     <!-- media sosial (dipindah dari tab Find Us) -->
     <div class="info">
       <div class="lbl">Follow us</div>
@@ -327,6 +354,7 @@
     <div id="cartList"></div>
     <div id="cartForm" style="display:none">
       <div class="jumlah"><span>Total</span><span id="total">RM0.00</span></div>
+      <div class="club-bar" id="clubBaris"></div>
       <label class="f">How to receive</label>
       <div class="kecil" style="margin:-2px 0 14px">Pick up at the shop (Jln. Mentol). For delivery, order
         through foodpanda or ShopeeFood in the Order tab.</div>
@@ -389,6 +417,7 @@
   <img id="viewerImg" src="assets/menu-2026-09.jpg" alt="Menu KOFFIE">
 </div>
 <div class="kotak" id="suhu"></div>
+<div class="kotak" id="club"></div>
 
 <div class="toast" id="toast"></div>
 
@@ -625,6 +654,76 @@ function pilihItem(it, ci, ii) {
   kotak.onclick = e => { if (e.target === kotak) kotak.classList.remove("on"); };
 }
 
+/* ---------- Koffie Club (kad ahli) ----------
+   Data ahli datang dari endpoint Apps Script (projek bot stok) melalui JSONP:
+   fetch() biasa disekat CORS dari origin GitHub Pages, tag <script> tidak.
+   Identiti diambil dari Telegram.WebApp.initData dan disahkan di server. */
+const AHLI_API = "https://script.google.com/macros/s/AKfycbyajSr4HGpuvNpT4-7KJhLVji4ui84SgqPXpyGfAu3Ro9eMp-K7OHeJmYqs_0rxiNDi/exec";
+const STAMP_SASARAN = 10;
+let ahliSiap = false;
+
+function bukaClub() {
+  const kotak = document.getElementById("club");
+  // Bina kerangka SEKALI sahaja — kalau dibina semula, kad yang sudah dimuat hilang
+  // dan muatAhli() terhenti awal (ahliSiap), jadi panel tersangkut pada 'Loading…'.
+  if (!kotak.querySelector("#clubBadan")) {
+    kotak.innerHTML = `<div class="kotak-in">
+      <div class="kotak-tajuk">Koffie Club</div>
+      <div class="kotak-sub">Your card</div>
+      <div id="clubBadan"><div class="kecil">Loading…</div></div>
+      <button class="club-tutup" id="clubTutup">Close</button>
+    </div>`;
+    kotak.onclick = e => { if (e.target === kotak) kotak.classList.remove("on"); };
+    const tb = kotak.querySelector("#clubTutup");
+    if (tb) tb.onclick = () => kotak.classList.remove("on");
+  }
+  kotak.classList.add("on");
+  muatAhli(false);
+}
+
+function muatAhli(paksa) {
+  const badan = document.getElementById("clubBadan");
+  if (!badan) return;
+  // Baca initData secara langsung (bukan TG yang ditangkap semasa muat) — kalau
+  // telegram-web-app.js dimuat lewat, TG boleh jadi kosong walaupun Telegram sedia ada.
+  const init = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData)
+             || (TG && TG.initData) || "";
+  if (!init) {
+    badan.innerHTML = `<div class="kecil">Open Koffie Club from inside Telegram to see your stamps.</div>`;
+    return;
+  }
+  if (ahliSiap && !paksa) return;
+  badan.innerHTML = `<div class="kecil">Loading…</div>`;
+
+  // JSONP: satu laluan tarik ahli (sama seperti paparan diskaun pada troli)
+  tarikAhli(function (d) {
+    if (!d || d.ok !== true) {
+      badan.innerHTML = `<div class="kecil">Could not load your card${d && d.ralat ? " (" + esc(d.ralat) + ")" : ""}.</div>`;
+      return;
+    }
+    ahliSiap = true;
+    const a = d.ahli || {};
+    const stamp = Math.max(0, Math.min(STAMP_SASARAN, Number(a.stamp || 0)));
+    const sel = Array.from({ length: STAMP_SASARAN }, (_, i) =>
+      `<div class="club-stamp${i < stamp ? " on" : ""}">${i < stamp ? "★" : i + 1}</div>`).join("");
+    const adaHadiah = Number(a.hadiah || 0) > 0;
+    badan.innerHTML = `
+      <div class="club-nama">${esc(a.nama || "Member")}${adaHadiah ? ' <span class="club-badge">10% OFF READY</span>' : ""}</div>
+      <div class="kotak-sub">${stamp}/${STAMP_SASARAN} stamps</div>
+      <div class="club-grid">${sel}</div>
+      <div class="club-baris"><span>Points</span><b>${Math.round(Number(a.mata || 0))}</b></div>
+      <div class="club-baris"><span>Orders</span><b>${Math.round(Number(a.bil_pesanan || 0))}</b></div>
+      <div class="club-baris"><span>Member since</span><b>${esc(a.pertama_kali || "-")}</b></div>
+      ${adaHadiah ? '<div class="club-kod">🎉 <b>10% off your next order is ready.</b> Show this card at the counter to redeem.</div>' : ""}
+      <div class="club-kod">Member code <b>${esc(a.kod || "-")}</b> — show it at the counter so the staff can add your stamps.</div>
+      <button class="club-tutup" id="clubRefresh">Refresh</button>`;
+    const rb = document.getElementById("clubRefresh");
+    if (rb) rb.onclick = () => muatAhli(true);
+  });
+}
+
+try { const bc = document.getElementById("btnClub"); if (bc) bc.onclick = bukaClub; } catch (e) {}
+
 /* ---------- troli ---------- */
 let cart = [];
 try { cart = JSON.parse(localStorage.getItem("koffie_cart") || "[]") || []; } catch (e) { cart = []; }
@@ -674,6 +773,28 @@ function ubah(i, d) {
   simpan(); lukisCart(); bunyi(); lantunBadge();
 }
 function jumlah() { return cart.reduce((s, x) => s + x.h * x.q, 0); }
+/* Koffie Club: 10 order → order ke-11 dapat diskaun 10% automatik.
+   Keadaan ahli dibaca dari server (JSONP); bot tetap mengira semula di server,
+   jadi angka di sini hanya untuk paparan. */
+let AHLI = null;
+function tarikAhli(cb) {
+  const init = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) ||
+               (TG && TG.initData) || "";
+  if (!init) { cb(null); return; }
+  const nama = "koffieAhliCb" + (++tarikAhli.n);
+  window[nama] = d => {
+    const a = (d && d.ok) ? d.ahli : null;
+    if (a) AHLI = a;
+    cb(a);
+  };
+  const s = document.createElement("script");
+  s.src = AHLI_API + "?aksi=ahli&init=" + encodeURIComponent(init) + "&callback=" + nama;
+  s.onerror = () => cb(null);
+  document.head.appendChild(s);
+}
+tarikAhli.n = 0;
+const diskaunAktif = () => !!(AHLI && Number(AHLI.hadiah) > 0);
+const jumlahBersih = () => diskaunAktif() ? Math.round(jumlah() * 0.9 * 100) / 100 : jumlah();
 function kiraQty() { return cart.reduce((s, x) => s + x.q, 0); }
 
 function lukisCart() {
@@ -683,7 +804,8 @@ function lukisCart() {
   const kosong = !cart.length;
   document.getElementById("cartEmpty").style.display = kosong ? "block" : "none";
   document.getElementById("cartForm").style.display = kosong ? "none" : "block";
-  if (kosong) { list.innerHTML = ""; document.getElementById("total").textContent = RM(0); return; }
+  if (kosong) { list.innerHTML = ""; document.getElementById("total").textContent = RM(0);
+    document.getElementById("clubBaris").style.display = "none"; return; }
   list.innerHTML = cart.map((x, i) => `<div class="baris">
       <div class="nm">${esc(x.n)}${(x.an && x.an.length)
         ? `<span class="addon-kecil">${x.an.map(a => "+ " + esc(a.nama) + " " + RM(a.harga)).join("<br>")}</span>` : ""}</div>
@@ -694,7 +816,13 @@ function lukisCart() {
     </div>`).join("");
   list.querySelectorAll(".qty button").forEach(b =>
     b.onclick = () => ubah(+b.dataset.i, +b.dataset.d));
-  document.getElementById("total").textContent = RM(jumlah());
+  document.getElementById("total").textContent = RM(jumlahBersih());
+  const cb2 = document.getElementById("clubBaris");
+  if (diskaunAktif()) {
+    cb2.style.display = "block";
+    cb2.innerHTML = "🎁 <b>Koffie Club −10%</b> — you saved " + RM(jumlah() - jumlahBersih()) +
+      ". Your reward is used on this order.";
+  } else cb2.style.display = "none";
   notaHantar();
 }
 function notaHantar() {
@@ -813,7 +941,8 @@ function teksPesananPenuh() {
   if (nama) t += "Name: " + nama + "\n";
   if (tel) t += "Phone: " + tel + "\n\n";
   cart.forEach(x => { t += x.q + "x " + x.n + " = " + RM(x.h * x.q) + "\n"; });
-  t += "\nTOTAL: " + RM(jumlah()) + "\n";
+  t += "\nTOTAL: " + RM(jumlahBersih()) + "\n";
+  if (diskaunAktif()) t += "(Koffie Club -10%: " + RM(jumlah() - jumlahBersih()) + " off)\n";
   if (nota) t += "Notes: " + nota + "\n";
   return t;
 }
@@ -970,6 +1099,7 @@ function lukisHome() {
 /* ---------- mula ---------- */
 (function mula() {
   lukisChips(); lukisMenu(); lukisCart(); pulihKenalan(); lukisGal(); lukisLok(); lukisHome();
+  tarikAhli(() => lukisCart());     // Koffie Club: diskaun 10% kelihatan sebelum pelanggan hantar
   // logo rasmi menggantikan perkataan KOFFIE bila SHOP.logo diisi dalam data.js
   if (D.SHOP.logo) {
     document.querySelector(".brand").innerHTML =
