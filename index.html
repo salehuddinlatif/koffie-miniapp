@@ -8,7 +8,7 @@
 <style>
   :root{
     --bg:#0d0d0d; --panel:#151515; --panel2:#1c1c1c; --line:#2a2a2a;
-    --ink:#f4f1ea; --muted:#9a938a; --accent:#d9a86c; --ok:#5fbf7f; --no:#c9564f;
+    --ink:#f4f1ea; --muted:#9a938a; --accent:#036635; --accent2:#4fc98a; --ok:#5fbf7f; --no:#c9564f;
     --radius:14px; --pad:16px;
     --tg-atas:0px;              /* ruang atas ikut UI Telegram — diisi oleh JS */
   }
@@ -41,7 +41,7 @@
     font-family:inherit;cursor:pointer}
   .nav-in button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7}
   .nav-in button.on{color:var(--ink)}
-  .badge{position:absolute;transform:translate(14px,-6px);background:var(--accent);color:#111;
+  .badge{position:absolute;transform:translate(14px,-6px);background:var(--accent);color:#f4f1ea;
     border-radius:9px;font-size:9.5px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center}
 
   /* ---------- sections ---------- */
@@ -64,7 +64,7 @@
 
   /* item terbang ke ikon cart */
   .terbang{position:fixed;z-index:200;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;
-    background:var(--accent);color:#111;display:flex;align-items:center;justify-content:center;
+    background:var(--accent);color:#f4f1ea;display:flex;align-items:center;justify-content:center;
     font-size:12px;font-weight:700;pointer-events:none;
     transition:transform .5s cubic-bezier(.4,.05,.3,1),opacity .5s ease}
   @keyframes lantun{0%{transform:translate(14px,-6px) scale(1)}
@@ -84,9 +84,9 @@
   /* ---------- menu ---------- */
   .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
-  .chip{flex:0 0 auto;background:var(--panel);border:1px solid var(--line);color:var(--muted);
+  .chip{flex:0 0 auto;background:var(--panel);border:1px solid rgba(79,201,138,.30);color:var(--accent2);
     border-radius:999px;padding:8px 14px;font-size:11.5px;letter-spacing:.08em;font-family:inherit;cursor:pointer}
-  .chip.on{background:var(--ink);color:#111;border-color:var(--ink);font-weight:600}
+  .chip.on{background:var(--accent);color:#f4f1ea;border-color:var(--accent);font-weight:600}
   .item{display:flex;gap:12px;background:var(--panel);border:1px solid var(--line);
     border-radius:var(--radius);padding:12px;margin-bottom:10px;align-items:center}
   .item img{width:56px;height:56px;border-radius:10px;object-fit:cover;background:var(--panel2);flex:0 0 auto}
@@ -96,7 +96,7 @@
   .nama{font-size:14.5px;font-weight:600;line-height:1.3}
   .desc{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.45;
     overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  .harga{font-size:13.5px;color:var(--accent);font-weight:600;margin-top:5px}
+  .harga{font-size:13.5px;color:var(--accent2);font-weight:600;margin-top:5px}
   .tambah{background:var(--ink);color:#111;border:0;width:34px;height:34px;border-radius:50%;
     font-size:19px;line-height:1;cursor:pointer;flex:0 0 auto;font-family:inherit}
   .item.habis{opacity:.42}
@@ -106,7 +106,7 @@
   .baris{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);
     border-radius:12px;padding:11px 12px;margin-bottom:8px}
   .baris .nm{flex:1;font-size:13.5px}
-  .baris .sub{color:var(--accent);font-size:13px;font-weight:600}
+  .baris .sub{color:var(--accent2);font-size:13px;font-weight:600}
   .qty{display:flex;align-items:center;gap:9px}
   .qty button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);width:27px;height:27px;
     border-radius:8px;font-size:15px;font-family:inherit;cursor:pointer}
@@ -123,11 +123,11 @@
   .seg button{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:11px;
     padding:11px;font-size:13px;font-family:inherit;cursor:pointer}
   .seg button.on{background:var(--ink);color:#111;border-color:var(--ink);font-weight:600}
-  .hantar{width:100%;margin-top:18px;background:var(--accent);color:#141414;border:0;border-radius:12px;
+  .hantar{width:100%;margin-top:18px;background:var(--accent);color:#f4f1ea;border:0;border-radius:12px;
     padding:15px;font-size:14.5px;font-weight:700;letter-spacing:.06em;font-family:inherit;cursor:pointer}
   .hantar:disabled{opacity:.5}
   .kecil{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:10px}
-  .kecil a{color:var(--accent);text-decoration:none}
+  .kecil a{color:var(--accent2);text-decoration:none}
 
   /* ---------- gallery / lokasi ---------- */
   /* satu lajur, RAPAT: gambar bersambung terus dengan gambar berikutnya (tiada jarak/caption) */
@@ -142,7 +142,7 @@
   .btnrow{display:grid;gap:9px;margin-top:14px}
   .btn{display:flex;align-items:center;justify-content:center;gap:9px;background:var(--panel);border:1px solid var(--line);
     color:var(--ink);border-radius:12px;padding:14px;font-size:14px;text-decoration:none;font-family:inherit;cursor:pointer}
-  .btn.utama{background:var(--accent);color:#141414;border-color:var(--accent);font-weight:700}
+  .btn.utama{background:var(--accent);color:#f4f1ea;border-color:var(--accent);font-weight:700}
   .btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
   .toast{position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);background:var(--ink);color:#111;
     padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;
@@ -174,22 +174,23 @@
   .kotak.on{display:flex}
 
   /* ---------- Koffie Club ---------- */
-  .club-btn{display:flex;align-items:center;gap:9px;justify-content:center}
+  .club-btn{display:flex;align-items:center;gap:9px;justify-content:center;
+    background:var(--accent);border-color:var(--accent);color:#f4f1ea;font-weight:700}
   .club-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .club-nama{font-size:19px;font-weight:700;margin:2px 0 12px}
-  .club-bar{display:none;margin-top:7px;font-size:12px;color:var(--accent);line-height:1.5}
+  .club-bar{display:none;margin-top:7px;font-size:12px;color:var(--accent2);line-height:1.5}
   .club-badge{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:10px;
-    letter-spacing:.08em;background:var(--accent);color:#141414;vertical-align:middle}
+    letter-spacing:.08em;background:var(--accent);color:#f4f1ea;vertical-align:middle}
   /* Saiz tetap + flexbox — JANGAN guna aspect-ratio: WebView Telegram lama tak sokong,
      bulatan jadi tinggi 0 dan stamp "hilang" walaupun kad nampak. */
   .club-grid{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0 16px}
   .club-stamp{width:46px;height:46px;flex:0 0 auto;border-radius:50%;
-    border:1px solid rgba(217,168,108,.55);display:flex;
-    align-items:center;justify-content:center;font-size:13px;color:#c8b48f}
-  .club-stamp.on{background:var(--accent);border-color:var(--accent);color:#141414;font-weight:700}
+    border:1px solid rgba(79,201,138,.45);display:flex;
+    align-items:center;justify-content:center;font-size:13px;color:#7fc9a5}
+  .club-stamp.on{background:var(--accent);border-color:var(--accent);color:#f4f1ea;font-weight:700}
   .club-baris{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;
     border-bottom:1px solid rgba(244,241,234,.09)}
-  .club-baris b{color:var(--accent);font-weight:600}
+  .club-baris b{color:var(--accent2);font-weight:600}
   .club-kod{font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.6}
   .club-tutup{width:100%;margin-top:14px;background:transparent;color:#f4f1ea;border:1px solid rgba(244,241,234,.2);
     border-radius:12px;padding:12px;font-family:inherit;font-size:13px;cursor:pointer}
@@ -200,7 +201,7 @@
   .kotak-pil{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .kotak-pil button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:12px;
     padding:14px;font-size:13px;font-family:inherit;cursor:pointer;line-height:1.6}
-  .kotak-pil button b{font-size:15px;color:var(--accent)}
+  .kotak-pil button b{font-size:15px;color:var(--accent2)}
   .kotak-pil button.on{background:var(--ink);color:#111;border-color:var(--ink);font-weight:600}
   .kotak-pil button.on b{color:#111}
 
@@ -213,7 +214,7 @@
     border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;cursor:pointer}
   .addon-baris input{width:17px;height:17px;accent-color:var(--accent);flex:0 0 auto;margin:0}
   .addon-baris span{flex:1}
-  .addon-baris b{color:var(--accent);font-size:12.5px;font-weight:600}
+  .addon-baris b{color:var(--accent2);font-size:12.5px;font-weight:600}
   .addon-baris.addon-drop{gap:8px}
   .addon-sub{font-size:11.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;
     margin:6px 0 -2px}
@@ -721,7 +722,7 @@ function muatAhli(paksa) {
       <div class="club-baris"><span>Orders</span><b>${Math.round(Number(a.bil_pesanan || 0))}</b></div>
       <div class="club-baris"><span>Member since</span><b>${esc(a.pertama_kali || "-")}</b></div>
       ${adaHadiah ? '<div class="club-kod">🎉 <b>10% off your next order is ready.</b> Show this card at the counter to redeem.</div>' : ""}
-      <div class="club-kod">Member code <b>${esc(a.kod || "-")}</b> — show it at the counter so the staff can add your stamps.</div>
+      <div class="club-kod">Member code <b>${esc(a.kod || "-")}</b></div>
       <button class="club-tutup" id="clubRefresh">Refresh</button>`;
     const rb = document.getElementById("clubRefresh");
     if (rb) rb.onclick = () => muatAhli(true);
