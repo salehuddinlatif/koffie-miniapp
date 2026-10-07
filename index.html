@@ -424,6 +424,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="data.js?v=20260922c"></script>
 <script>
 /* =====================================================================
@@ -991,14 +992,11 @@ document.getElementById("btnHantar").onclick = async () => {
   simpanKenalan();                       // ingat nama/telefon/nota untuk pesanan berikutnya
   const penuh = teksPesananPenuh();
 
-  // 1) Bila app dibuka dari butang papan-kekunci bot, Telegram boleh hantar data terus.
-  try {
-    if (TG && TG.sendData && TG.initData && /\bweb_app_data\b/.test(TG.initData)) {
-      TG.sendData(kodPesanan()); kosongkanCart(); toast("Order sent — cart cleared"); return;
-    }
-  } catch (e) {}
+  /* JANGAN kembali ke TG.sendData: bot order tidak mengendalikan web_app_data, jadi
+     pesanan yang dihantar melalui laluan itu hilang tanpa jejak kepada shop.
+     Laluan deep link (t.me/bot?start=<kod>) ialah laluan yang diuji dan berfungsi. */
 
-  // 2) Jalan biasa: deeplink ke bot dengan kod pesanan yang padat (≤64 aksara).
+  // Jalan biasa: deeplink ke bot dengan kod pesanan yang padat (≤64 aksara).
   const padat = kodPesananMuat();
   const kod = padat.kod;
   if (s.telegramBot && kod.length <= 64) {
@@ -1119,10 +1117,24 @@ function lukisHome() {
   });
 }
 
+/* Pautan/payload yang boleh buka kad Koffie Club terus:
+   t.me/koffieebot/<app>?startapp=club  →  tgWebAppStartParam=club
+   atau URL biasa  ?buka=club  /  #club  (untuk ujian & pautan biasa) */
+function paramMula() {
+  try {
+    const cari = (s) => (s || '').toLowerCase();
+    const hash = new URLSearchParams(String(location.hash || '').replace(/^#/, ''));
+    const q = new URLSearchParams(String(location.search || ''));
+    const nilai = [hash.get('tgWebAppStartParam'), hash.get('buka'), q.get('buka'), q.get('startapp'), cari(location.hash)];
+    return nilai.some(v => cari(v).indexOf('club') >= 0);
+  } catch (e) { return false; }
+}
+
 /* ---------- mula ---------- */
 (function mula() {
   lukisChips(); lukisMenu(); lukisCart(); pulihKenalan(); lukisGal(); lukisLok(); lukisHome();
   tarikAhli(() => lukisCart());     // Koffie Club: diskaun 10% kelihatan sebelum pelanggan hantar
+  if (paramMula()) setTimeout(bukaClub, 350);   // pautan terus ke kad Koffie Club
   // logo rasmi menggantikan perkataan KOFFIE bila SHOP.logo diisi dalam data.js
   if (D.SHOP.logo) {
     document.querySelector(".brand").innerHTML =
