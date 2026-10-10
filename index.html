@@ -175,7 +175,7 @@
 
   /* ---------- Koffie Club ---------- */
   /* Baris penuh (bukan butang kecil terampai) — gaya sama seperti baris pilihan Pick up/Delivery/Menu */
-  .club-tajuk{color:var(--accent2)}
+  .club-logo{display:block;width:126px;height:auto;margin:4px auto 10px;image-rendering:pixelated}
   .club-kad{display:flex;align-items:center;gap:13px;width:100%;text-align:left;margin:2px 0 18px;
     background:var(--panel);border:1px solid rgba(79,201,138,.35);border-radius:var(--radius);
     padding:14px;color:var(--ink);font-family:inherit;cursor:pointer}
@@ -186,7 +186,8 @@
   .club-teks b{font-size:14.5px;font-weight:600}
   .club-teks i{font-size:11.5px;color:var(--accent2);font-style:normal}
   .club-anak{color:var(--accent2);font-size:19px;padding-right:2px}
-  .club-nama{font-size:19px;font-weight:700;margin:2px 0 12px}
+  .club-nama{font-size:19px;font-weight:700;margin:2px 0 4px}
+  .club-tier{font-size:11.5px;letter-spacing:.05em;color:var(--accent2);margin:0 0 12px}
   .club-bar{display:none;margin-top:7px;font-size:12px;color:var(--accent2);line-height:1.5}
   .club-badge{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:10px;
     letter-spacing:.08em;background:var(--accent);color:#f4f1ea;vertical-align:middle}
@@ -681,7 +682,7 @@ function bukaClub() {
   // dan muatAhli() terhenti awal (ahliSiap), jadi panel tersangkut pada 'Loading…'.
   if (!kotak.querySelector("#clubBadan")) {
     kotak.innerHTML = `<div class="kotak-in">
-      <div class="kotak-tajuk club-tajuk">Koffie Club</div>
+      <img class="club-logo" src="assets/logo-koffie-club.png" alt="Koffie Club">
       <div class="kotak-sub">Your card</div>
       <div id="clubBadan"><div class="kecil">Loading…</div></div>
       <button class="club-tutup" id="clubTutup">Close</button>
@@ -719,19 +720,21 @@ function muatAhli(paksa) {
     }
     ahliSiap = true;
     const stamp = Math.max(0, Math.min(STAMP_SASARAN, Number(a.stamp || 0)));
+    // stamp yang sudah dikumpul memapar huruf KOFFIECLUB (10 huruf = 10 stamp)
+    const HURUF_STAMP = "KOFFIECLUB";
     const sel = Array.from({ length: STAMP_SASARAN }, (_, i) =>
-      `<div class="club-stamp${i < stamp ? " on" : ""}">${i < stamp ? "★" : i + 1}</div>`).join("");
+      `<div class="club-stamp${i < stamp ? " on" : ""}">${i < stamp ? HURUF_STAMP.charAt(i) : i + 1}</div>`).join("");
     const adaHadiah = Number(a.hadiah || 0) > 0;
     badan.innerHTML = `
       <div class="club-nama">${esc(a.nama || "Member")}${adaHadiah ? ' <span class="club-badge">10% OFF READY</span>' : ""}</div>
+      ${a.tier ? `<div class="club-tier">${esc(a.tier.nama)} · Tier ${a.tier.tier}</div>` : ""}
       <div class="kotak-sub">${stamp}/${STAMP_SASARAN} stamps</div>
       <div class="club-grid">${sel}</div>
       <div class="club-baris"><span>Points</span><b>${Math.round(Number(a.mata || 0))}</b></div>
       <div class="club-baris"><span>Orders</span><b>${Math.round(Number(a.bil_pesanan || 0))}</b></div>
       <div class="club-baris"><span>Member since</span><b>${esc(a.pertama_kali || "-")}</b></div>
       ${adaHadiah ? '<div class="club-kod">🎉 <b>10% off your next order is ready.</b> Show this card at the counter to redeem.</div>' : ""}
-      <div class="club-kod">Member code <b>${esc(a.kod || "-")}</b></div>
-      <button class="club-tutup" id="clubRefresh">Refresh</button>`;
+      <div class="club-kod">Member code <b>${esc(a.kod || "-")}</b></div>`;
     const rb = document.getElementById("clubRefresh");
     if (rb) rb.onclick = () => muatAhli(true);
   });
