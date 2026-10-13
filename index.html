@@ -673,6 +673,17 @@ function pilihItem(it, ci, ii) {
    fetch() biasa disekat CORS dari origin GitHub Pages, tag <script> tidak.
    Identiti diambil dari Telegram.WebApp.initData dan disahkan di server. */
 const AHLI_API = "https://script.google.com/macros/s/AKfycbyajSr4HGpuvNpT4-7KJhLVji4ui84SgqPXpyGfAu3Ro9eMp-K7OHeJmYqs_0rxiNDi/exec";
+
+/* ---------- SUPABASE (branch `supabase-sandbox`) ----------
+   Kosong = app berkelakuan PERSIS seperti production (laluan Apps Script/JSONP).
+   Isi dua nilai ini untuk menguji laluan Supabase pada sandbox.
+
+   SUPABASE_ANON_KEY ialah KUNCI AWAM — memang direka untuk berada dalam klien.
+   RLS menghalangnya daripada membaca customers/orders/club_ledger (hanya menu
+   awam dan Edge Function yang mengesahkan initData yang boleh dicapai).
+   JANGAN letak service_role key di sini. Jangan merge ke main tanpa izin Cayrill. */
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
 const STAMP_SASARAN = 10;
 let ahliSiap = false;
 
@@ -795,9 +806,43 @@ function jumlah() { return cart.reduce((s, x) => s + x.h * x.q, 0); }
    Keadaan ahli dibaca dari server (JSONP); bot tetap mengira semula di server,
    jadi angka di sini hanya untuk paparan. */
 let AHLI = null;
+function initTelegram() {
+  return (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) ||
+         (TG && TG.initData) || "";
+}
 function tarikAhli(cb, cuba) {
-  const init = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) ||
-               (TG && TG.initData) || "";
+  const init = initTelegram();
+  if (!init) { cb(null); return; }
+  // Laluan Supabase: Edge Function `ahli` mengesahkan initData di server (HMAC
+  // dengan token bot) dan memulangkan kad awam sahaja. Kalau ia gagal atas apa
+  // sebab pun, kita jatuh balik ke laluan Apps Script — branch ini tidak boleh
+  // mematikan kad ahli pelanggan.
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    (async () => {
+      try {
+        const r = await fetch(SUPABASE_URL.replace(/\/+$/, "") + "/functions/v1/ahli", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": "Bearer " + SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ init: init, umur: 86400 })
+        });
+        const d = await r.json().catch(() => null);
+        if (d && d.ok) { AHLI = d.ahli; cb(d.ahli); return; }
+        console.warn("Koffie Club: Supabase tolak initData —", d && d.ralat);
+      } catch (e) { console.warn("Koffie Club: Supabase gagal —", e); }
+      tarikAhliJsonp(cb, cuba);
+    })();
+    return;
+  }
+  tarikAhliJsonp(cb, cuba);
+}
+/* Laluan lama (Apps Script + JSONP) — dikekalkan supaya app ini masih berfungsi
+   tanpa Supabase (dan semasa rollback). */
+function tarikAhliJsonp(cb, cuba) {
+  const init = initTelegram();
   if (!init) { cb(null); return; }
   cuba = cuba || 0;
   const nama = "koffieAhliCb" + (++tarikAhli.n);
