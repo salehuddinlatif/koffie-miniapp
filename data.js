@@ -129,31 +129,31 @@ window.KOFFIE_DATA = {
          "kecualiMinuman": ["Nama minuman"] = sembunyikan untuk minuman tertentu sahaja.
          Kategori ini tidak muncul sebagai chip — ia dibaca oleh sheet setiap minuman. */
       item: [
-        { nama: "Extra Shot",     panas: 2.00, sejuk: 2.00, nota: "", img: "" },
-        { nama: "Upsize",         panas: 3.00, sejuk: 3.00, nota: "", img: "" },
-        { nama: "Whipping Cream", panas: 2.00, sejuk: 2.00, nota: "", img: "" },
-        { nama: "Oatmilk",        panas: 3.00, sejuk: 3.00, nota: "", img: "" },
+        { nama: "Extra Shot",     panas: 2.00, sejuk: 2.00, nota: "", img: "", kecuali: ["OFF-THE-MENU"] },
+        { nama: "Upsize",         panas: 3.00, sejuk: 3.00, nota: "", img: "", kecuali: ["OFF-THE-MENU"] },
+        { nama: "Whipping Cream", panas: 2.00, sejuk: 2.00, nota: "", img: "", kecuali: ["OFF-THE-MENU"] },
+        { nama: "Oatmilk",        panas: 3.00, sejuk: 3.00, nota: "", img: "", kecuali: ["OFF-THE-MENU"] },
         { nama: "Frappe",         panas: 2.00, sejuk: 2.00, nota: "", img: "",
-          kecuali: ["FRAPPE", "SIGNATURE SERIES"],
+          kecuali: ["FRAPPE", "SIGNATURE SERIES", "OFF-THE-MENU"],
           kecualiMinuman: ["Espresso", "Cold Brew", "Americano"] },
-        { nama: "Topping",        panas: 1.50, sejuk: 1.50, nota: "Pick any", img: "", banyak: true,
+        { nama: "Topping",        panas: 1.50, sejuk: 1.50, nota: "Pick any", img: "", kecuali: ["OFF-THE-MENU"], banyak: true,
           pilihan: [
             { nama: "Chocolate Chip", harga: 1.50 },
             { nama: "Biscoff",        harga: 1.50 },
             { nama: "Oreo",           harga: 1.50 },
             { nama: "Almond",         harga: 1.50 },
           ] },
-        { nama: "Drizzle",        panas: 2.00, sejuk: 2.00, nota: "Pick one", img: "",
+        { nama: "Drizzle",        panas: 2.00, sejuk: 2.00, nota: "Pick one", img: "", kecuali: ["OFF-THE-MENU"],
           pilihan: [
             { nama: "Caramel",   harga: 2.00 },
             { nama: "Chocolate", harga: 2.00 },
           ] },
-        { nama: "Upside Down",    panas: 2.00, sejuk: 2.00, nota: "Pick one", img: "",
+        { nama: "Upside Down",    panas: 2.00, sejuk: 2.00, nota: "Pick one", img: "", kecuali: ["OFF-THE-MENU"],
           pilihan: [
             { nama: "Caramel",   harga: 2.00 },
             { nama: "Chocolate", harga: 2.00 },
           ] },
-        { nama: "Syrup",          panas: 2.00, sejuk: 2.00, nota: "Pick one", img: "",
+        { nama: "Syrup",          panas: 2.00, sejuk: 2.00, nota: "Pick one", img: "", kecuali: ["OFF-THE-MENU"],
           pilihan: [
             { nama: "Vanilla",        harga: 2.00 },
             { nama: "Caramel",        harga: 2.00 },
@@ -166,6 +166,12 @@ window.KOFFIE_DATA = {
           ] },
       ],
     },
+
+    { kategori: "OFF-THE-MENU", nota: "Small-batch specials", item: [
+      { nama: "Caliburn",   panas: null, sejuk: 13.00, nota: "Tonic + signature syrup", img: "" },
+      { nama: "Butterbrew", panas: null, sejuk: 13.00, nota: "", img: "" },
+      { nama: "Solero",     panas: null, sejuk: 14.70, nota: "Tropical citrus", img: "" },
+    ] },
   ],
 
   /* -------------------------------------------------------------------
