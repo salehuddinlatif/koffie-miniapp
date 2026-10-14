@@ -168,9 +168,9 @@ window.KOFFIE_DATA = {
     },
 
     { kategori: "OFF-THE-MENU", nota: "Small-batch specials", item: [
-      { nama: "Caliburn",   panas: null, sejuk: 13.00, nota: "Tonic + signature syrup", img: "" },
-      { nama: "Butterbrew", panas: null, sejuk: 13.00, nota: "", img: "" },
-      { nama: "Solero",     panas: null, sejuk: 14.70, nota: "Tropical citrus", img: "" },
+      { nama: "Caliburn",   panas: null, sejuk: 13.00, nota: "Sharp, Clean, quietly lethal", img: "" },
+      { nama: "Butterbrew", panas: null, sejuk: 13.00, nota: "Sweet thunder with a creme crown", img: "" },
+      { nama: "Solero",     panas: null, sejuk: 14.70, nota: "vanilla slushy, sharp lime, dangerously refreshing", img: "" },
     ] },
   ],
 
