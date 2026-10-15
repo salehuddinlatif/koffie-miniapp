@@ -171,6 +171,8 @@ window.KOFFIE_DATA = {
       { nama: "Caliburn",   panas: null, sejuk: 13.00, nota: "Sharp, Clean, quietly lethal", img: "" },
       { nama: "Butterbrew", panas: null, sejuk: 13.00, nota: "Sweet thunder with a creme crown", img: "" },
       { nama: "Solero",     panas: null, sejuk: 14.70, nota: "vanilla slushy, sharp lime, dangerously refreshing", img: "" },
+      { nama: "Cloudy Latte Gula Melaka", panas: null, sejuk: 15.50, nota: "gula melaka latte with cloud. local flex", img: "" },
+      { nama: "Cloudy Matcha",            panas: null, sejuk: 15.50, nota: "matcha with cream cloud. soft launch energy", img: "" },
     ] },
   ],
 
