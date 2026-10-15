@@ -438,7 +438,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="data.js?v=20261015e"></script>
+<script src="data.js?v=20261015f"></script>
 <script>
 /* =====================================================================
    KOFFIE mini app — logik. Jangan perlu edit kecuali kau nak ubah tingkah laku.
@@ -949,6 +949,15 @@ function toast(m) {
   const t = document.getElementById("toast"); t.textContent = m; t.classList.add("on");
   clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("on"), 1700);
 }
+/* Kecilkan (tutup) mini app selepas pesanan keluar ke Telegram supaya pelanggan terus
+   nampak chat bot — dia tak perlu cari butang tutup pada mini app.
+   Delay 600 ms: Telegram perlu masa memproses pautan t.me dahulu; close() serta-merta
+   berisiko membatalkan pautan itu dan pesanan tak sampai ke kedai.
+   Di luar Telegram (browser biasa) tiada apa nak ditutup — fungsi ini senyap. */
+function kecilkanApp() {
+  if (!TG || !TG.close) return;
+  setTimeout(() => { try { TG.close(); } catch (e) {} }, 600);
+}
 
 /* ---------- hantar pesanan ---------- */
 /* Telegram had payload /start kepada 64 aksara, jadi pesanan dipadatkan kepada
@@ -1045,11 +1054,16 @@ document.getElementById("btnHantar").onclick = async () => {
     toast(padat.dipangkas
       ? "Order sent — note shortened, please confirm the rest with the shop"
       : "Order sent — press Start in Telegram");
+    kecilkanApp();                       // app dikecilkan → pelanggan terus nampak chat bot
     return;
   }
 
   // 3) Terlalu panjang atau tiada bot: salin teks penuh, buka bot untuk tampal.
-  try { await navigator.clipboard.writeText(penuh); toast("Order copied — paste it into the shop chat"); }
+  try {
+    await navigator.clipboard.writeText(penuh);
+    toast("Order copied — paste it into the shop chat");
+    kecilkanApp();                       // hanya bila teks sempat disalin (kalau tidak, app kekal terbuka)
+  }
   catch (e) { toast("Re-type your order in the shop chat"); }
   kosongkanCart();
   if (s.telegramBot) {
